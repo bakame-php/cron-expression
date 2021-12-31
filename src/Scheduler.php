@@ -19,9 +19,13 @@ final class Scheduler implements CronScheduler
     private DateTimeZone $timezone;
     private int $maxIterationCount;
     private int $startDatePresence;
+
+    /** Internal variables to optimize calculating runs */
+
     /** @var array<string, array{0:string, 1:CronFieldValidator}>  */
     private array $calculatedFields;
     private bool $combineRuns = false;
+    private string|null $minuteFieldExpression;
 
     public function __construct(
         CronExpression|string $expression,
@@ -33,7 +37,7 @@ final class Scheduler implements CronScheduler
         $this->timezone = $this->filterTimezone($timezone);
         $this->startDatePresence = $this->filterStartDatePresence($startDatePresence);
         $this->maxIterationCount = $this->filterMaxIterationCount($maxIterationCount);
-        $this->setCalculatedFields();
+        $this->init();
     }
 
     private function filterExpression(CronExpression|string $expression): CronExpression
@@ -72,7 +76,7 @@ final class Scheduler implements CronScheduler
         return $startDatePresence;
     }
 
-    private function setCalculatedFields(): void
+    private function init(): void
     {
         // We don't have to satisfy * fields
         $this->calculatedFields = [];
@@ -85,6 +89,7 @@ final class Scheduler implements CronScheduler
         }
 
         $this->combineRuns = isset($this->calculatedFields[ExpressionField::MONTHDAY->value], $this->calculatedFields[ExpressionField::WEEKDAY->value]);
+        $this->minuteFieldExpression = $this->calculatedFields[ExpressionField::MINUTE->value][0] ?? null;
     }
 
     public static function fromUTC(CronExpression|string $expression): self
@@ -172,13 +177,13 @@ final class Scheduler implements CronScheduler
             $invert = true;
         }
 
-        return $this->calculateRun($nth, $startDate, $this->startDatePresence, $invert);
+        return $this->calculateRun($startDate, $nth, $this->startDatePresence, $invert);
     }
 
     public function isDue(DateTimeInterface|string $when): bool
     {
         try {
-            return $this->calculateRun(0, $when, self::INCLUDE_START_DATE, false) == $this->toDateTimeImmutable($when);
+            return $this->calculateRun($when, 0, self::INCLUDE_START_DATE, false) == $this->toDateTimeImmutable($when);
         } catch (Throwable) {
             return false;
         }
@@ -187,24 +192,36 @@ final class Scheduler implements CronScheduler
     public function yieldRunsForward(DateTimeInterface|string $startDate, int $recurrences): Generator
     {
         $max = max(0, $recurrences);
-        for ($i = 0; $i < $max; $i++) {
+        $i = 0;
+        $fieldValidator = ExpressionField::MINUTE->validator();
+        while ($i < $max) {
             try {
-                yield $this->calculateRun($i, $startDate, $this->startDatePresence, false);
+                $res = $this->calculateRun($startDate, 0, $this->startDatePresence, false);
             } catch (UnableToProcessRun) {
                 break;
             }
+            yield $res;
+
+            $startDate = $fieldValidator->increment($res, $this->minuteFieldExpression);
+            ++$i;
         }
     }
 
     public function yieldRunsBackward(DateTimeInterface|string $endDate, int $recurrences): Generator
     {
         $max = max(0, $recurrences);
-        for ($i = 0; $i < $max; $i++) {
+        $i = 0;
+        $fieldValidator = ExpressionField::MINUTE->validator();
+        while ($i < $max) {
             try {
-                yield $this->calculateRun($i, $endDate, $this->startDatePresence, true);
+                $res = $this->calculateRun($endDate, 0, $this->startDatePresence, true);
             } catch (UnableToProcessRun) {
                 break;
             }
+            yield $res;
+
+            $endDate = $fieldValidator->decrement($res, $this->minuteFieldExpression);
+            ++$i;
         }
     }
 
@@ -213,24 +230,27 @@ final class Scheduler implements CronScheduler
         $startDate = $this->toDateTimeImmutable($startDate);
         $endDate = $startDate->add($this->toDateInterval($interval));
         if ($endDate < $startDate) {
-            throw new SyntaxError('The start date MUST be lower or equal to the end date.');
+            throw new SyntaxError('The start date MUST be lesser than or equal to the end date.');
         }
 
-        $i = 0;
+        $fieldValidator = ExpressionField::MINUTE->validator();
+        $presence = $this->startDatePresence;
         $nextRun = $startDate;
         while ($endDate > $nextRun) {
             try {
-                $nextRun = $this->calculateRun($i, $startDate, $this->startDatePresence, false);
-                if ($endDate < $nextRun) {
-                    break;
-                }
+                $nextRun = $this->calculateRun($startDate, 0, $presence, false);
             } catch (UnableToProcessRun) {
+                break;
+            }
+
+            if ($endDate < $nextRun) {
                 break;
             }
 
             yield $nextRun;
 
-            ++$i;
+            $startDate = $fieldValidator->increment($nextRun, $this->minuteFieldExpression);
+            $presence = self::INCLUDE_START_DATE;
         }
     }
 
@@ -239,31 +259,34 @@ final class Scheduler implements CronScheduler
         $endDate = $this->toDateTimeImmutable($endDate);
         $startDate = $endDate->sub($this->toDateInterval($interval));
         if ($endDate < $startDate) {
-            throw new SyntaxError('The start date MUST be lower or equal to the end date.');
+            throw new SyntaxError('The end date MUST be greater than or equal to the start date.');
         }
 
-        $i = 0;
+        $fieldValidator = ExpressionField::MINUTE->validator();
+        $presence = $this->startDatePresence;
         $nextRun = $endDate;
         while ($startDate < $nextRun) {
             try {
-                $nextRun = $this->calculateRun($i, $endDate, $this->startDatePresence, true);
-                if ($startDate > $nextRun) {
-                    break;
-                }
+                $nextRun = $this->calculateRun($endDate, 0, $presence, true);
             } catch (UnableToProcessRun) {
+                break;
+            }
+
+            if ($startDate > $nextRun) {
                 break;
             }
 
             yield $nextRun;
 
-            ++$i;
+            $endDate = $fieldValidator->decrement($nextRun, $this->minuteFieldExpression);
+            $presence = self::INCLUDE_START_DATE;
         }
     }
 
     public function yieldRunsBetween(DateTimeInterface|string $startDate, DateTimeInterface|string $endDate): Generator
     {
         $startDate = $this->toDateTimeImmutable($startDate);
-        $endDate = $startDate::createFromInterface($this->toDateTimeImmutable($endDate));
+        $endDate = $this->toDateTimeImmutable($endDate);
 
         if ($endDate >= $startDate) {
             return $this->yieldRunsAfter($startDate, $startDate->diff($endDate));
@@ -275,15 +298,15 @@ final class Scheduler implements CronScheduler
     /**
      * Get the next or previous run date of the expression relative to a date.
      *
-     * @param int $nth Number of matches to skip before returning
      * @param DateTimeInterface|string $startDate Relative calculation date
+     * @param int $nth Number of matches to skip before returning
      * @param int $startDatePresence Set to self::INCLUDE_START_DATE to return the start date if eligible
      *                               Set to self::EXCLUDE_START_DATE to never return the start date
      * @param bool $invert Set to TRUE to go backwards
      *
      * @throws CronError on too many iterations
      */
-    private function calculateRun(int $nth, DateTimeInterface|string $startDate, int $startDatePresence, bool $invert): DateTimeImmutable
+    private function calculateRun(DateTimeInterface|string $startDate, int $nth, int $startDatePresence, bool $invert): DateTimeImmutable
     {
         $startDate = $this->toDateTimeImmutable($startDate);
         if ($this->combineRuns) {
@@ -292,6 +315,7 @@ final class Scheduler implements CronScheduler
 
         $nextRun = $startDate;
         $i = 0;
+        $minuteFieldValidator = ExpressionField::MINUTE->validator();
         while ($i < $this->maxIterationCount) {
             start:
             foreach ($this->calculatedFields as [$fieldExpression, $fieldValidator]) {
@@ -309,11 +333,9 @@ final class Scheduler implements CronScheduler
                 return $nextRun;
             }
 
-            $fieldValidator = ExpressionField::MINUTE->validator();
-            $fieldExpression = $this->calculatedFields[ExpressionField::MINUTE->value][0] ?? null;
             $nextRun = match ($invert) {
-                true => $fieldValidator->decrement($nextRun, $fieldExpression),
-                default => $fieldValidator->increment($nextRun, $fieldExpression),
+                true => $minuteFieldValidator->decrement($nextRun, $this->minuteFieldExpression),
+                default => $minuteFieldValidator->increment($nextRun, $this->minuteFieldExpression),
             };
             ++$i;
         }

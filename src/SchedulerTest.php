@@ -641,7 +641,7 @@ final class SchedulerTest extends TestCase
         );
     }
 
-    public function testItWillReturnsOneRun(): void
+    public function testItWillReturnsOneRunOnlyForward(): void
     {
         $scheduler = Scheduler::fromSystemTimezone('*/5 * * * *')->includeStartDate();
         $res = array_map(
@@ -649,5 +649,15 @@ final class SchedulerTest extends TestCase
             iterator_to_array($scheduler->yieldRunsBetween('2010-01-02 00:00:00', '2010-01-02 00:04:00'), false)
         );
         self::assertSame(['2010-01-02 00:00:00'], $res);
+    }
+
+    public function testItWillReturnsOneRunOnlyBackward(): void
+    {
+        $scheduler = Scheduler::fromSystemTimezone('*/5 * * * *')->includeStartDate();
+        $res = array_map(
+            fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
+            iterator_to_array($scheduler->yieldRunsBetween('2010-01-02 00:05:00', '2010-01-02 00:02:00'), false)
+        );
+        self::assertSame(['2010-01-02 00:05:00'], $res);
     }
 }
