@@ -166,12 +166,6 @@ abstract class FieldValidator implements CronFieldValidator
             return true;
         }
 
-        if (str_contains($fieldExpression, '/')) {
-            [$range, $step] = explode('/', $fieldExpression);
-
-            return $this->isValid($range) && false !== filter_var($step, FILTER_VALIDATE_INT);
-        }
-
         // Validate each chunk of a list individually
         if (str_contains($fieldExpression, ',')) {
             foreach (explode(',', $fieldExpression) as $listItem) {
@@ -180,6 +174,12 @@ abstract class FieldValidator implements CronFieldValidator
                 }
             }
             return true;
+        }
+
+        if (str_contains($fieldExpression, '/')) {
+            [$range, $step] = explode('/', $fieldExpression);
+
+            return $this->isValid($range) && false !== filter_var($step, FILTER_VALIDATE_INT);
         }
 
         if (str_contains($fieldExpression, '-')) {

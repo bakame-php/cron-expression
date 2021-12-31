@@ -2,6 +2,24 @@
 
 All Notable changes to `cron` will be documented in this file
 
+## [Next] - TBD
+
+### Added
+
+- None
+
+### Fixed
+
+- Change Character precedence for `,` to allow more CRON expression.
+
+### Deprecated
+
+- None
+
+### Removed
+
+- None
+
 ## [0.3.0] - 2021-12-31
 
 ### Added

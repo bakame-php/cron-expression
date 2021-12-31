@@ -18,7 +18,7 @@ final class MonthValidatorTest extends TestCase
         $f = new MonthValidator();
         self::assertTrue($f->isValid('12'));
         self::assertTrue($f->isValid('*'));
-        self::assertFalse($f->isValid('*/10,2,1-12'));
+        self::assertTrue($f->isValid('*/10,2,1-12'));
         self::assertFalse($f->isValid('1.fix-regexp'));
     }
 

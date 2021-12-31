@@ -18,7 +18,7 @@ final class MinuteValidatorTest extends TestCase
         $f = new MinuteValidator();
         self::assertTrue($f->isValid('1'));
         self::assertTrue($f->isValid('*'));
-        self::assertFalse($f->isValid('*/3,1,1-12'));
+        self::assertTrue($f->isValid('*/3,1,1-12'));
     }
 
     public function testIncrementsDate(): void
