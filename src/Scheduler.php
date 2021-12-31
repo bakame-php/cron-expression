@@ -196,13 +196,13 @@ final class Scheduler implements CronScheduler
         $fieldValidator = ExpressionField::MINUTE->validator();
         while ($i < $max) {
             try {
-                $res = $this->calculateRun($startDate, 0, $this->startDatePresence, false);
+                $run = $this->calculateRun($startDate, 0, $this->startDatePresence, false);
             } catch (UnableToProcessRun) {
                 break;
             }
-            yield $res;
+            yield $run;
 
-            $startDate = $fieldValidator->increment($res, $this->minuteFieldExpression);
+            $startDate = $fieldValidator->increment($run, $this->minuteFieldExpression);
             ++$i;
         }
     }
@@ -214,13 +214,13 @@ final class Scheduler implements CronScheduler
         $fieldValidator = ExpressionField::MINUTE->validator();
         while ($i < $max) {
             try {
-                $res = $this->calculateRun($endDate, 0, $this->startDatePresence, true);
+                $run = $this->calculateRun($endDate, 0, $this->startDatePresence, true);
             } catch (UnableToProcessRun) {
                 break;
             }
-            yield $res;
+            yield $run;
 
-            $endDate = $fieldValidator->decrement($res, $this->minuteFieldExpression);
+            $endDate = $fieldValidator->decrement($run, $this->minuteFieldExpression);
             ++$i;
         }
     }
@@ -235,21 +235,21 @@ final class Scheduler implements CronScheduler
 
         $fieldValidator = ExpressionField::MINUTE->validator();
         $presence = $this->startDatePresence;
-        $nextRun = $startDate;
-        while ($endDate > $nextRun) {
+        $run = $startDate;
+        while ($endDate > $run) {
             try {
-                $nextRun = $this->calculateRun($startDate, 0, $presence, false);
+                $run = $this->calculateRun($startDate, 0, $presence, false);
             } catch (UnableToProcessRun) {
                 break;
             }
 
-            if ($endDate < $nextRun) {
+            if ($endDate < $run) {
                 break;
             }
 
-            yield $nextRun;
+            yield $run;
 
-            $startDate = $fieldValidator->increment($nextRun, $this->minuteFieldExpression);
+            $startDate = $fieldValidator->increment($run, $this->minuteFieldExpression);
             $presence = self::INCLUDE_START_DATE;
         }
     }
@@ -264,21 +264,21 @@ final class Scheduler implements CronScheduler
 
         $fieldValidator = ExpressionField::MINUTE->validator();
         $presence = $this->startDatePresence;
-        $nextRun = $endDate;
-        while ($startDate < $nextRun) {
+        $run = $endDate;
+        while ($startDate < $run) {
             try {
-                $nextRun = $this->calculateRun($endDate, 0, $presence, true);
+                $run = $this->calculateRun($endDate, 0, $presence, true);
             } catch (UnableToProcessRun) {
                 break;
             }
 
-            if ($startDate > $nextRun) {
+            if ($startDate > $run) {
                 break;
             }
 
-            yield $nextRun;
+            yield $run;
 
-            $endDate = $fieldValidator->decrement($nextRun, $this->minuteFieldExpression);
+            $endDate = $fieldValidator->decrement($run, $this->minuteFieldExpression);
             $presence = self::INCLUDE_START_DATE;
         }
     }
@@ -313,29 +313,29 @@ final class Scheduler implements CronScheduler
             return $this->combineRuns($nth, $startDate, $invert);
         }
 
-        $nextRun = $startDate;
+        $run = $startDate;
         $i = 0;
         $minuteFieldValidator = ExpressionField::MINUTE->validator();
         while ($i < $this->maxIterationCount) {
             start:
             foreach ($this->calculatedFields as [$fieldExpression, $fieldValidator]) {
-                if (!$fieldValidator->isSatisfiedBy($fieldExpression, $nextRun)) {
-                    $nextRun = match ($invert) {
-                        true => $fieldValidator->decrement($nextRun, $fieldExpression),
-                        default => $fieldValidator->increment($nextRun, $fieldExpression),
+                if (!$fieldValidator->isSatisfiedBy($fieldExpression, $run)) {
+                    $run = match ($invert) {
+                        true => $fieldValidator->decrement($run, $fieldExpression),
+                        default => $fieldValidator->increment($run, $fieldExpression),
                     };
                     ++$i;
                     goto start;
                 }
             }
 
-            if (($startDatePresence === self::INCLUDE_START_DATE || $nextRun != $startDate) && 0 > --$nth) {
-                return $nextRun;
+            if (($startDatePresence === self::INCLUDE_START_DATE || $run != $startDate) && 0 > --$nth) {
+                return $run;
             }
 
-            $nextRun = match ($invert) {
-                true => $minuteFieldValidator->decrement($nextRun, $this->minuteFieldExpression),
-                default => $minuteFieldValidator->increment($nextRun, $this->minuteFieldExpression),
+            $run = match ($invert) {
+                true => $minuteFieldValidator->decrement($run, $this->minuteFieldExpression),
+                default => $minuteFieldValidator->increment($run, $this->minuteFieldExpression),
             };
             ++$i;
         }
@@ -364,7 +364,12 @@ final class Scheduler implements CronScheduler
             ),
         };
 
-        usort($combinedRuns, fn (DateTimeInterface $a, DateTimeInterface $b): int => $a <=> $b);
+        usort(
+            $combinedRuns,
+            $invert ?
+                fn (DateTimeInterface $a, DateTimeInterface $b): int => $b <=> $a :
+                fn (DateTimeInterface $a, DateTimeInterface $b): int => $a <=> $b
+        );
 
         return $combinedRuns[$nth];
     }
@@ -388,6 +393,9 @@ final class Scheduler implements CronScheduler
         }
     }
 
+    /**
+     * @throws SyntaxError
+     */
     private function toDateInterval(DateInterval|string $interval): DateInterval
     {
         if ($interval instanceof DateInterval) {

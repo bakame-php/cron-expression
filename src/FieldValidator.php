@@ -18,6 +18,61 @@ abstract class FieldValidator implements CronFieldValidator
     /** Literal values we need to convert to integers. */
     protected array $literals = [];
 
+    abstract protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool;
+
+    public function isSatisfiedBy(string $fieldExpression, DateTimeInterface $date): bool
+    {
+        foreach (array_map('trim', explode(',', $fieldExpression)) as $expression) {
+            if ($this->isSatisfiedExpression($expression, $date)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isValid(string $fieldExpression): bool
+    {
+        $fieldExpression = $this->convertLiterals($fieldExpression);
+
+        // All fields allow * as a valid value
+        if ('*' === $fieldExpression) {
+            return true;
+        }
+
+        // Validate each chunk of a list individually
+        if (str_contains($fieldExpression, ',')) {
+            foreach (explode(',', $fieldExpression) as $listItem) {
+                if (!$this->isValid($listItem)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (str_contains($fieldExpression, '/')) {
+            [$range, $step] = explode('/', $fieldExpression);
+
+            return $this->isValid($range) && false !== filter_var($step, FILTER_VALIDATE_INT);
+        }
+
+        if (str_contains($fieldExpression, '-')) {
+            if (substr_count($fieldExpression, '-') > 1) {
+                return false;
+            }
+
+            [$first, $last] = array_map([$this, 'convertLiterals'], explode('-', $fieldExpression));
+            if (in_array('*', [$first, $last], true)) {
+                return false;
+            }
+
+            return $this->isValid($first) && $this->isValid($last);
+        }
+
+        return 1 === preg_match('/^\d+$/', $fieldExpression)
+            && in_array((int) $fieldExpression, $this->fullRanges(), true);
+    }
+
     /**
      * @return array<int>
      */
@@ -29,29 +84,13 @@ abstract class FieldValidator implements CronFieldValidator
     /**
      * Check to see if a field is satisfied by a value.
      */
-    protected function isSatisfied(int $dateValue, string $value): bool
+    final protected function isSatisfied(int $dateValue, string $value): bool
     {
         return match (true) {
-            $this->isIncrementsOfRanges($value) => $this->isInIncrementsOfRanges($dateValue, $value),
-            $this->isRange($value) => $this->isInRange($dateValue, $value),
+            str_contains($value, '/') => $this->isInIncrementsOfRanges($dateValue, $value),
+            str_contains($value, '-') => $this->isInRange($dateValue, $value),
             default => $value === '*' || $dateValue === (int) $value,
         };
-    }
-
-    /**
-     * Check if a value is a range.
-     */
-    protected function isRange(string $value): bool
-    {
-        return str_contains($value, '-');
-    }
-
-    /**
-     * Check if a value is an increments of ranges.
-     */
-    protected function isIncrementsOfRanges(string $value): bool
-    {
-        return str_contains($value, '/');
     }
 
     /**
@@ -59,9 +98,9 @@ abstract class FieldValidator implements CronFieldValidator
      */
     protected function isInRange(int $dateValue, string $value): bool
     {
-        $parts = array_map(fn (string $value): int => (int) $this->convertLiterals(trim($value)), explode('-', $value, 2));
+        [$first, $last] = array_map(fn (string $value): int => (int) $this->convertLiterals(trim($value)), explode('-', $value, 2));
 
-        return $dateValue >= $parts[0] && $dateValue <= $parts[1];
+        return $dateValue >= $first && $dateValue <= $last;
     }
 
     /**
@@ -120,11 +159,11 @@ abstract class FieldValidator implements CronFieldValidator
             );
         }
 
-        if (!$this->isRange($expression) && !$this->isIncrementsOfRanges($expression)) {
+        if (!str_contains($expression, '-') && !str_contains($expression, '/')) {
             return [(int) $expression];
         }
 
-        if (!$this->isIncrementsOfRanges($expression)) {
+        if (!str_contains($expression, '/')) {
             [$offset, $to] = array_map([$this, 'convertLiterals'], explode('-', $expression));
             $step = 1;
         } else {
@@ -157,48 +196,6 @@ abstract class FieldValidator implements CronFieldValidator
         return (string) $key;
     }
 
-    public function isValid(string $fieldExpression): bool
-    {
-        $fieldExpression = $this->convertLiterals($fieldExpression);
-
-        // All fields allow * as a valid value
-        if ('*' === $fieldExpression) {
-            return true;
-        }
-
-        // Validate each chunk of a list individually
-        if (str_contains($fieldExpression, ',')) {
-            foreach (explode(',', $fieldExpression) as $listItem) {
-                if (!$this->isValid($listItem)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        if (str_contains($fieldExpression, '/')) {
-            [$range, $step] = explode('/', $fieldExpression);
-
-            return $this->isValid($range) && false !== filter_var($step, FILTER_VALIDATE_INT);
-        }
-
-        if (str_contains($fieldExpression, '-')) {
-            if (substr_count($fieldExpression, '-') > 1) {
-                return false;
-            }
-
-            [$first, $last] = array_map([$this, 'convertLiterals'], explode('-', $fieldExpression));
-            if (in_array('*', [$first, $last], true)) {
-                return false;
-            }
-
-            return $this->isValid($first) && $this->isValid($last);
-        }
-
-        return 1 === preg_match('/^\d+$/', $fieldExpression)
-            && in_array((int) $fieldExpression, $this->fullRanges(), true);
-    }
-
     protected function computePosition(int $currentValue, array $references, bool $invert): int
     {
         $nbField = count($references);
@@ -225,17 +222,4 @@ abstract class FieldValidator implements CronFieldValidator
 
         return $date;
     }
-
-    public function isSatisfiedBy(string $fieldExpression, DateTimeInterface $date): bool
-    {
-        foreach (array_map('trim', explode(',', $fieldExpression)) as $expression) {
-            if ($this->isSatisfiedExpression($expression, $date)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    abstract protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool;
 }

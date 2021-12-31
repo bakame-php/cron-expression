@@ -19,6 +19,7 @@ final class HourValidatorTest extends TestCase
         self::assertTrue($f->isValid('1'));
         self::assertTrue($f->isValid('*'));
         self::assertTrue($f->isValid('*/3,1,1-12'));
+        self::assertTrue($f->isValid('5-7,11-13'));
     }
 
     /**
