@@ -544,7 +544,7 @@ final class SchedulerTest extends TestCase
         $scheduler = Scheduler::fromSystemTimezone('* * * * *');
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
-            iterator_to_array($scheduler->yieldRuns('2010-01-02 00:00:00', '2010-01-01 23:55:00'), false)
+            iterator_to_array($scheduler->yieldRunsBetween('2010-01-02 00:00:00', '2010-01-01 23:55:00'), false)
         );
         self::assertSame([
             '2010-01-01 23:59:00',
@@ -560,7 +560,7 @@ final class SchedulerTest extends TestCase
         $scheduler = Scheduler::fromSystemTimezone('* * * * *')->includeStartDate();
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
-            iterator_to_array($scheduler->yieldRuns('2010-01-02 00:00:00', '2010-01-01 23:55:00'), false)
+            iterator_to_array($scheduler->yieldRunsBetween('2010-01-02 00:00:00', '2010-01-01 23:55:00'), false)
         );
         self::assertSame([
             '2010-01-02 00:00:00',
@@ -577,7 +577,7 @@ final class SchedulerTest extends TestCase
         $scheduler = Scheduler::fromSystemTimezone('* * * * *');
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
-            iterator_to_array($scheduler->yieldRuns('2010-01-01 23:55:00', '2010-01-02 00:00:00'), false)
+            iterator_to_array($scheduler->yieldRunsBetween('2010-01-01 23:55:00', '2010-01-02 00:00:00'), false)
         );
         self::assertSame([
             '2010-01-01 23:56:00',
@@ -593,7 +593,7 @@ final class SchedulerTest extends TestCase
         $scheduler = Scheduler::fromSystemTimezone('* * * * *')->includeStartDate();
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
-            iterator_to_array($scheduler->yieldRuns('2010-01-01 23:55:00', '2010-01-02 00:00:00'), false)
+            iterator_to_array($scheduler->yieldRunsBetween('2010-01-01 23:55:00', '2010-01-02 00:00:00'), false)
         );
         self::assertSame([
             '2010-01-01 23:55:00',
@@ -639,5 +639,15 @@ final class SchedulerTest extends TestCase
         iterator_to_array(
             Scheduler::fromSystemTimezone('* * * * *')->yieldRunsAfter('now', '-3 days')
         );
+    }
+
+    public function testItWillReturnsOneRun(): void
+    {
+        $scheduler = Scheduler::fromSystemTimezone('*/5 * * * *')->includeStartDate();
+        $res = array_map(
+            fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
+            iterator_to_array($scheduler->yieldRunsBetween('2010-01-02 00:00:00', '2010-01-02 00:04:00'), false)
+        );
+        self::assertSame(['2010-01-02 00:00:00'], $res);
     }
 }

@@ -378,15 +378,6 @@ $scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
 $runs = $scheduler->yieldRunsBackward(new DateTime('2019-10-10 23:20:00'), 5);
 ```
 
-#### Iterating using a starting date and an end date
-
-```php
-$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
-$runs = $scheduler->yieldRuns('2019-10-10 23:20:00', '2019-09-09 00:30:00');
-```
-
-**NOTICE:** If the end date is lower than the start date then the iteration will be backward.
-
 #### Iterating using a starting date and an interval
 
 ```php
@@ -400,6 +391,15 @@ $runs = $scheduler->yieldRunsAfter('2019-10-10 23:20:00', new DateInterval('P1D'
 $scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
 $runs = $scheduler->yieldRunsBefore('2019-10-10 23:20:00', '1 DAY');
 ```
+
+#### Iterating using a starting date and an end date
+
+```php
+$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
+$runs = $scheduler->yieldRunsBetween('2019-10-10 23:20:00', '2019-09-09 00:30:00');
+```
+
+**NOTICE:** If the end date is lower than the start date then the iteration will be backward.
 
 ## Testing
 

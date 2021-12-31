@@ -83,19 +83,6 @@ interface CronScheduler
     public function isDue(DateTimeInterface|string $when): bool;
 
     /**
-     * Returns multiple run dates starting at least at the specific starting date and ending at most at the specified
-     * end date. The last generated date will be after or equal to the specified date.
-     *
-     * @throws CronError
-     * @return Generator<DateTimeImmutable>
-     *
-     *
-     * @see Scheduler::yieldRunsBefore()
-     * @see Scheduler::yieldRunsAfter()
-     */
-    public function yieldRuns(DateTimeInterface|string $startDate, DateTimeInterface|string $endDate): Generator;
-
-    /**
      * Returns multiple run dates ending at most at the specific ending date and ending at most after the specified
      * interval.
      *
@@ -113,7 +100,21 @@ interface CronScheduler
      *
      * @return Generator<DateTimeImmutable>
      */
-    public function yieldRunsAfter(DateTimeInterface|string $endDate, DateInterval|string $interval): Generator;
+    public function yieldRunsAfter(DateTimeInterface|string $startDate, DateInterval|string $interval): Generator;
+
+    /**
+     * Returns multiple run between two endpoints: The generated runs will start at least at the specific starting date
+     * and end at most at the specified end date. Depending on the start date and end date value the returned Generator
+     * can list the runs backward.
+     *
+     * @throws CronError
+     * @return Generator<DateTimeImmutable>
+     *
+     *
+     * @see Scheduler::yieldRunsBefore()
+     * @see Scheduler::yieldRunsAfter()
+     */
+    public function yieldRunsBetween(DateTimeInterface|string $startDate, DateTimeInterface|string $endDate): Generator;
 
     /**
      * Get multiple run dates starting at least at the current date or a specific date or after it.

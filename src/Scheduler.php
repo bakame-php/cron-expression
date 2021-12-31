@@ -184,18 +184,6 @@ final class Scheduler implements CronScheduler
         }
     }
 
-    public function yieldRuns(DateTimeInterface|string $startDate, DateTimeInterface|string $endDate): Generator
-    {
-        $startDate = $this->toDateTimeImmutable($startDate);
-        $endDate = $startDate::createFromInterface($this->toDateTimeImmutable($endDate));
-
-        if ($endDate >= $startDate) {
-            return $this->yieldRunsAfter($startDate, $startDate->diff($endDate));
-        }
-
-        return $this->yieldRunsBefore($startDate, $endDate->diff($startDate));
-    }
-
     public function yieldRunsForward(DateTimeInterface|string $startDate, int $recurrences): Generator
     {
         $max = max(0, $recurrences);
@@ -233,11 +221,10 @@ final class Scheduler implements CronScheduler
         while ($endDate > $nextRun) {
             try {
                 $nextRun = $this->calculateRun($i, $startDate, $this->startDatePresence, false);
+                if ($endDate < $nextRun) {
+                    break;
+                }
             } catch (UnableToProcessRun) {
-                break;
-            }
-
-            if ($endDate < $nextRun) {
                 break;
             }
 
@@ -260,11 +247,10 @@ final class Scheduler implements CronScheduler
         while ($startDate < $nextRun) {
             try {
                 $nextRun = $this->calculateRun($i, $endDate, $this->startDatePresence, true);
+                if ($startDate > $nextRun) {
+                    break;
+                }
             } catch (UnableToProcessRun) {
-                break;
-            }
-
-            if ($startDate > $nextRun) {
                 break;
             }
 
@@ -272,6 +258,18 @@ final class Scheduler implements CronScheduler
 
             ++$i;
         }
+    }
+
+    public function yieldRunsBetween(DateTimeInterface|string $startDate, DateTimeInterface|string $endDate): Generator
+    {
+        $startDate = $this->toDateTimeImmutable($startDate);
+        $endDate = $startDate::createFromInterface($this->toDateTimeImmutable($endDate));
+
+        if ($endDate >= $startDate) {
+            return $this->yieldRunsAfter($startDate, $startDate->diff($endDate));
+        }
+
+        return $this->yieldRunsBefore($startDate, $endDate->diff($startDate));
     }
 
     /**
