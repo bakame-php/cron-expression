@@ -2,7 +2,7 @@
 
 All Notable changes to `cron` will be documented in this file
 
-## Next - TBD
+## [0.3.0] - 2021-12-31
 
 ### Added
 
@@ -13,7 +13,7 @@ All Notable changes to `cron` will be documented in this file
 ### Fixed
 
 - **[BC Break]** `CronFieldValidator::increment` and `CronFieldValidator::decrement` accept any `DateTimeInterface` implementing object but will always return a `DateTimeImmutable` object.
-- **[BC Break]** `CronScheduler::run`, `CronScheduler::isDue`, `CronScheduler::yieldRunsForward`, `CronScheduler::yieldRunsBackward` signature is changed to have the start date as first argument and mandatory
+- **[BC Break]** `CronScheduler::run`, `CronScheduler::isDue`, `CronScheduler::yieldRunsForward`, `CronScheduler::yieldRunsBackward` signature is changed the start date is the first argument and is required
 
 ### Deprecated
 
@@ -23,7 +23,7 @@ All Notable changes to `cron` will be documented in this file
 
 - **[BC Break]** The not documented public API `FieldValidator::isSatisfied` is removed from public API.
 
-## 0.2.0 - 2021-12-30
+## [0.2.0] - 2021-12-30
 
 ### Added
 
@@ -43,6 +43,11 @@ All Notable changes to `cron` will be documented in this file
 
 - `CronFieldValidator::increment` no longer has a `$invert` boolean argument. It is dropped and a `CronFieldValidator::decrement` method is introduced instead.
 
-## 0.1.0 - 2021-12-29
+## [0.1.0] - 2021-12-29
 
 Initial Release of `cron`
+
+[Next]: https://github.com/bakame-php/cron-expression/compare/0.3.0...master
+[0.3.0]: https://github.com/bakame-php/cron-expression/compare/0.2.0...0.3.0
+[0.2.0]: https://github.com/bakame-php/cron-expression/compare/0.1.0...0.2.0
+[0.1.0]: https://github.com/bakame-php/cron-expression/releases/tag/0.1.0
