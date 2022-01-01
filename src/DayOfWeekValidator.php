@@ -55,7 +55,7 @@ final class DayOfWeekValidator extends FieldValidator
         // Find out if this is the last specific weekday of the month
         $pos = strpos($fieldExpression, 'L');
         if (false !== $pos) {
-            $weekday = str_replace('7', '0', substr($fieldExpression, 0, $pos));
+            $weekday = $this->convertLiterals(str_replace('7', '0', substr($fieldExpression, 0, $pos)));
             $tempDate = DateTime::createFromInterface($date)->setDate($currentYear, $currentMonth, $lastDayOfMonth);
             while ($tempDate->format('w') !== $weekday) {
                 $tempDate->setDate($currentYear, $currentMonth, --$lastDayOfMonth);

@@ -24,9 +24,8 @@ final class Scheduler implements CronScheduler
 
     /** @var array<string, array{0:string, 1:CronFieldValidator}>  */
     private array $calculatedFields;
-    private bool $isWeekAndMonthDaysExpression;
+    private bool $includeDayOfWeekAndDayOfMonthExpression;
     private string|null $minuteFieldExpression;
-    private CronFieldValidator $minuteFieldValidator;
 
     public function __construct(
         CronExpression|string $expression,
@@ -90,9 +89,8 @@ final class Scheduler implements CronScheduler
             }
         }
 
-        $this->isWeekAndMonthDaysExpression = isset($this->calculatedFields[ExpressionField::DAY_OF_MONTH->value], $this->calculatedFields[ExpressionField::DAY_OF_WEEK->value]);
+        $this->includeDayOfWeekAndDayOfMonthExpression = isset($this->calculatedFields[ExpressionField::DAY_OF_MONTH->value], $this->calculatedFields[ExpressionField::DAY_OF_WEEK->value]);
         $this->minuteFieldExpression = $this->calculatedFields[ExpressionField::MINUTE->value][0] ?? null;
-        $this->minuteFieldValidator = ExpressionField::MINUTE->validator();
     }
 
     public static function fromUTC(CronExpression|string $expression): self
@@ -209,7 +207,7 @@ final class Scheduler implements CronScheduler
             // @codeCoverageIgnoreEnd
             yield $run;
 
-            $startDate = $this->minuteFieldValidator->increment($run, $this->minuteFieldExpression);
+            $startDate = ExpressionField::MINUTE->validator()->increment($run, $this->minuteFieldExpression);
             ++$i;
         }
     }
@@ -229,7 +227,7 @@ final class Scheduler implements CronScheduler
             // @codeCoverageIgnoreEnd
             yield $run;
 
-            $endDate = $this->minuteFieldValidator->decrement($run, $this->minuteFieldExpression);
+            $endDate = ExpressionField::MINUTE->validator()->decrement($run, $this->minuteFieldExpression);
             ++$i;
         }
     }
@@ -321,7 +319,7 @@ final class Scheduler implements CronScheduler
 
             yield $run;
 
-            $startDate = $this->minuteFieldValidator->increment($run, $this->minuteFieldExpression);
+            $startDate = ExpressionField::MINUTE->validator()->increment($run, $this->minuteFieldExpression);
             $presence = self::INCLUDE_START_DATE;
         }
     }
@@ -352,7 +350,7 @@ final class Scheduler implements CronScheduler
 
             yield $run;
 
-            $endDate = $this->minuteFieldValidator->decrement($run, $this->minuteFieldExpression);
+            $endDate = ExpressionField::MINUTE->validator()->decrement($run, $this->minuteFieldExpression);
             $presence = self::INCLUDE_START_DATE;
         }
     }
@@ -370,15 +368,15 @@ final class Scheduler implements CronScheduler
      */
     private function nextRun(DateTimeImmutable $startDate, int $nth, int $startDatePresence, bool $invert): DateTimeImmutable
     {
-        if ($this->isWeekAndMonthDaysExpression) {
+        if ($this->includeDayOfWeekAndDayOfMonthExpression) {
             return $this->nextWeekAndMonthDaysRun($nth, $startDate, $invert);
         }
 
         $run = $startDate;
         $i = 0;
+        start:
         while ($i < $this->maxIterationCount) {
-            start:
-            foreach ($this->calculatedFields as [$fieldExpression, $fieldValidator]) {
+            foreach ($this->calculatedFields as $position => [$fieldExpression, $fieldValidator]) {
                 if (!$fieldValidator->isSatisfiedBy($fieldExpression, $run)) {
                     $run = match ($invert) {
                         true => $fieldValidator->decrement($run, $fieldExpression),
@@ -394,8 +392,8 @@ final class Scheduler implements CronScheduler
             }
 
             $run = match ($invert) {
-                true => $this->minuteFieldValidator->decrement($run, $this->minuteFieldExpression),
-                default => $this->minuteFieldValidator->increment($run, $this->minuteFieldExpression),
+                true => ExpressionField::MINUTE->validator()->decrement($run, $this->minuteFieldExpression),
+                default => ExpressionField::MINUTE->validator()->increment($run, $this->minuteFieldExpression),
             };
             ++$i;
         }
