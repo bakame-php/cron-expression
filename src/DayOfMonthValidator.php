@@ -34,19 +34,18 @@ final class DayOfMonthValidator extends FieldValidator
 
     /**
      * Get the nearest day of the week for a given day in a month.
-     *
-     * @param int $currentYear Current year
-     * @param int $currentMonth Current month
-     * @param int $targetDay Target day of the month
-     *
-     * @return DateTime Returns the nearest date
      */
-    private static function getNearestWeekday(int $currentYear, int $currentMonth, int $targetDay): DateTimeInterface
+    private static function isNearestWeekday(DateTimeInterface $date, string $fieldExpression, int $position): bool
     {
+        $currentYear = (int) $date->format('Y');
+        $currentMonth = (int) $date->format('m');
+        $currentDay = $date->format('j');
+        $targetDay = (int) substr($fieldExpression, 0, $position);
+
         /** @var DateTime $target */
         $target = DateTime::createFromFormat('Y-n-j', "$currentYear-$currentMonth-$targetDay");
         if (6 > (int) $target->format('N')) {
-            return $target;
+            return $target->format('j') === $currentDay;
         }
 
         $lastDayOfMonth = (int) $target->format('t');
@@ -54,13 +53,13 @@ final class DayOfMonthValidator extends FieldValidator
             $adjusted = $targetDay + $i;
             if ($adjusted > 0 && $adjusted <= $lastDayOfMonth) {
                 $target->setDate($currentYear, $currentMonth, $adjusted);
-                if (6 > (int) $target->format('N') && $target->format('m') == $currentMonth) {
-                    return $target;
+                if (6 > (int) $target->format('N') && (int) $target->format('m') == $currentMonth) {
+                    return $target->format('j') === $currentDay;
                 }
             }
         }
 
-        return $target;
+        return $target->format('j') === $date->format('j');
     }
 
     protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool
@@ -70,11 +69,7 @@ final class DayOfMonthValidator extends FieldValidator
         return match (true) {
             '?' === $fieldExpression => true,
             'L' === $fieldExpression => $fieldValue === $date->format('t'),
-            false !== ($pos = strpos($fieldExpression, 'W')) => $date->format('j') === self::getNearestWeekday(
-                (int) $date->format('Y'),
-                (int) $date->format('m'),
-                (int) substr($fieldExpression, 0, $pos) // Parse the target day
-            )->format('j'),
+            false !== ($position = strpos($fieldExpression, 'W')) => self::isNearestWeekday($date, $fieldExpression, $position),
             default => $this->isSatisfied((int) $fieldValue, $fieldExpression),
         };
     }
