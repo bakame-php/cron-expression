@@ -109,10 +109,6 @@ interface CronScheduler
      *
      * @throws CronError
      * @return Generator<DateTimeImmutable>
-     *
-     *
-     * @see Scheduler::yieldRunsBefore()
-     * @see Scheduler::yieldRunsAfter()
      */
     public function yieldRunsBetween(DateTimeInterface|string $startDate, DateTimeInterface|string $endDate): Generator;
 

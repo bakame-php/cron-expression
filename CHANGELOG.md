@@ -12,8 +12,10 @@ All Notable changes to `cron` will be documented in this file
 
 - Change Character precedence for `,` to allow more CRON expression. see [#122](https://github.com/dragonmantank/cron-expression/pull/122/)
 - Improve results when both day of month and day of week are used. see [#121](https://github.com/dragonmantank/cron-expression/pull/121/)
+- Improve `Scheduler::yield*` methods implementations.
 - **[BC Break]** `ExpressionField::MONTHDAY` is renamed `ExpressionField::DAY_OF_MONTH`
 - **[BC Break]** `ExpressionField::WEEKDAY` is renamed `ExpressionField::DAY_OF_WEEK`
+- **[BC Break]** `SyntaxError` constructor is made private. It can only be accessed via named constructors.
 
 ### Deprecated
 

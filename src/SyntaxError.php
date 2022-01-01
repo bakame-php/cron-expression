@@ -11,10 +11,10 @@ final class SyntaxError extends InvalidArgumentException implements CronError
     /** @var array<string, string> */
     private array $errors;
 
-    public function __construct(string $message = '', int $code = 0, ?Throwable $previous = null)
+    private function __construct(string $message, array $errors = [], Throwable|null $previous = null)
     {
-        parent::__construct($message, $code, $previous);
-        $this->errors = [];
+        parent::__construct($message, 0, $previous);
+        $this->errors = $errors;
     }
 
     /**
@@ -46,13 +46,18 @@ final class SyntaxError extends InvalidArgumentException implements CronError
         return $exception;
     }
 
-    public static function dueToInvalidDate(DateTimeInterface|string $date, Throwable $exception): self
+    public static function dueToInvalidDateString(DateTimeInterface|string $date, Throwable $exception): self
     {
         if ($date instanceof DateTimeInterface) {
             $date = $date->format('c');
         }
 
-        return new self('Invalid DateTime expression `'.$date.'` to instantiate a `'.DateTimeInterface::class.'` implementing object.', 0, $exception);
+        return new self('The string `'.$date.'` is not a valid `DateTimeImmutable:::__construct` input.', [], $exception);
+    }
+
+    public static function dueToInvalidDateIntervalString(string $interval): self
+    {
+        return new self('The string `'.$interval.'` is not a valid `DateInterval::createFromDateString` input.');
     }
 
     public static function dueToInvalidStartDatePresence(): self
@@ -62,21 +67,39 @@ final class SyntaxError extends InvalidArgumentException implements CronError
 
     public static function dueToInvalidWeekday(int|string $nth): self
     {
-        return new self("Hashed weekdays must be numeric, {$nth} given");
+        return new self("Hashed weekdays must be numeric, $nth given");
     }
 
     public static function dueToUnsupportedWeekday(int|string $weekday): self
     {
-        return new self("Weekday must be a value between 0 and 7. {$weekday} given");
+        return new self("Weekday must be a value between 0 and 7. $weekday given");
     }
 
     public static function dueToOutOfRangeWeekday(int $nth): self
     {
-        return new self("There are never more than 5 or less than 1 of a given weekday in a month, {$nth} given");
+        return new self("There are never more than 5 or less than 1 of a given weekday in a month, $nth given");
     }
 
     public static function dueToInvalidMaxIterationCount(int $count): self
     {
-        return new self("maxIterationCount must be an integer greater or equal to 0. {$count} given");
+        return new self("maxIterationCount must be an integer greater or equal to 0. $count given");
+    }
+
+    public static function dueToIntervalStartDate(): self
+    {
+        return new self('The start date MUST be lesser than or equal to the end date.');
+    }
+
+    public static function dueToIntervalEndDate(): self
+    {
+        return new self('The end date MUST be greater than or equal to the start date.');
+    }
+
+    /**
+     * @param array<string> $fields
+     */
+    public static function dueToInvalidBuildFields(array $fields): self
+    {
+        return new self('The fields contain invalid offset names; expecting only the following fields: `'.implode('`, `', $fields).'`.');
     }
 }

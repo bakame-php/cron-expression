@@ -275,7 +275,7 @@ final class Scheduler implements CronScheduler
 
             return $currentDate->setTime((int) $currentDate->format('H'), (int) $currentDate->format('i'));
         } catch (Throwable $exception) {
-            throw SyntaxError::dueToInvalidDate($date, $exception);
+            throw SyntaxError::dueToInvalidDateString($date, $exception);
         }
     }
 
@@ -289,7 +289,7 @@ final class Scheduler implements CronScheduler
         }
 
         if (false === ($res = DateInterval::createFromDateString($interval))) {
-            throw new SyntaxError('The string `'.$interval.'` is not a valid `DateInterval::createFromDateString` input.');
+            throw SyntaxError::dueToInvalidDateIntervalString($interval);
         }
 
         return $res;
@@ -301,7 +301,7 @@ final class Scheduler implements CronScheduler
     private function runsAfter(DateTimeImmutable $startDate, DateTimeImmutable $endDate): Generator
     {
         if ($endDate < $startDate) {
-            throw new SyntaxError('The start date MUST be lesser than or equal to the end date.');
+            throw SyntaxError::dueToIntervalStartDate();
         }
 
         $presence = $this->startDatePresence;
@@ -332,7 +332,7 @@ final class Scheduler implements CronScheduler
     private function runsBefore(DateTimeImmutable $endDate, DateTimeImmutable $startDate): Generator
     {
         if ($endDate < $startDate) {
-            throw new SyntaxError('The end date MUST be greater than or equal to the start date.');
+            throw SyntaxError::dueToIntervalEndDate();
         }
 
         $presence = $this->startDatePresence;

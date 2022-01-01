@@ -94,7 +94,7 @@ final class ExpressionParser
         ];
 
         if ([] !== array_diff_key($fields, $defaultValues)) {
-            throw new SyntaxError('The fields contain invalid offset names; expecting only the following fields: `'.implode('`, `', array_keys($defaultValues)).'`.');
+            throw SyntaxError::dueToInvalidBuildFields(array_keys($defaultValues));
         }
 
         $fields += $defaultValues;
