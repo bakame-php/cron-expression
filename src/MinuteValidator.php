@@ -66,13 +66,10 @@ final class MinuteValidator extends FieldValidator
 
         $currentMinute = (int) $date->format('i');
         $minute = $minutes[$this->computePosition($currentMinute, $minutes, true)];
-
-        if ($currentMinute <= $minute) {
-            $date = $date->sub(new DateInterval('PT1H'));
-
-            return $date->setTime((int) $date->format('H'), 59);
+        if ($minute < $currentMinute) {
+            return $date->setTime((int) $date->format('H'), $minute);
         }
 
-        return $date->setTime((int) $date->format('H'), $minute);
+        return $date->sub(new DateInterval('PT'.((int) $date->format('j') + 1).'M'));
     }
 }

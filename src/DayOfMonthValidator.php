@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bakame\Cron;
 
+use DateInterval;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -80,16 +81,12 @@ final class DayOfMonthValidator extends FieldValidator
 
     public function increment(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
     {
-        return $this->toDateTimeImmutable($date)
-            ->setDate((int) $date->format('Y'), (int) $date->format('n'), (int) $date->format('j') + 1)
-            ->setTime(0, 0);
+        return $this->toDateTimeImmutable($date)->setTime(0, 0)->add(new DateInterval('P1D'));
     }
 
     public function decrement(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
     {
-        return $this->toDateTimeImmutable($date)
-            ->setDate((int) $date->format('Y'), (int) $date->format('n'), (int) $date->format('j') - 1)
-            ->setTime(23, 59);
+        return $this->toDateTimeImmutable($date)->setTime(0, 0)->sub(new DateInterval('PT1M'));
     }
 
     /**

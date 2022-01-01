@@ -39,15 +39,16 @@ final class MonthValidator extends FieldValidator
     public function increment(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
     {
         return  $this->toDateTimeImmutable($date)
-            ->setDate((int) $date->format('Y'), (int)$date->format('n') + 1, 1)
-            ->setTime(0, 0);
+            ->setDate((int) $date->format('Y'), (int) $date->format('n'), 1)
+            ->setTime(0, 0)
+            ->add(new DateInterval('P1M'));
     }
 
     public function decrement(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
     {
         return  $this->toDateTimeImmutable($date)
-            ->setDate((int) $date->format('Y'), (int)$date->format('n'), 1)
-            ->sub(new DateInterval('P1D'))
-            ->setTime(23, 59);
+            ->setDate((int) $date->format('Y'), (int) $date->format('n'), 1)
+            ->setTime(0, 0)
+            ->sub(new DateInterval('PT1M'));
     }
 }
