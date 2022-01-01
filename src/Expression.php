@@ -91,7 +91,7 @@ final class Expression implements CronExpression, JsonSerializable, Stringable
 
     public function dayOfMonth(): string
     {
-        return $this->fields[ExpressionField::MONTHDAY->value];
+        return $this->fields[ExpressionField::DAY_OF_MONTH->value];
     }
 
     public function month(): string
@@ -101,7 +101,7 @@ final class Expression implements CronExpression, JsonSerializable, Stringable
 
     public function dayOfWeek(): string
     {
-        return $this->fields[ExpressionField::WEEKDAY->value];
+        return $this->fields[ExpressionField::DAY_OF_WEEK->value];
     }
 
     public function toString(): string
@@ -144,7 +144,7 @@ final class Expression implements CronExpression, JsonSerializable, Stringable
 
     public function withDayOfMonth(string $fieldExpression): self
     {
-        return $this->newInstance([ExpressionField::MONTHDAY->value => $fieldExpression] + $this->fields);
+        return $this->newInstance([ExpressionField::DAY_OF_MONTH->value => $fieldExpression] + $this->fields);
     }
 
     public function withMonth(string $fieldExpression): self
@@ -154,6 +154,6 @@ final class Expression implements CronExpression, JsonSerializable, Stringable
 
     public function withDayOfWeek(string $fieldExpression): self
     {
-        return $this->newInstance([ExpressionField::WEEKDAY->value => $fieldExpression] + $this->fields);
+        return $this->newInstance([ExpressionField::DAY_OF_WEEK->value => $fieldExpression] + $this->fields);
     }
 }

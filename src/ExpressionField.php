@@ -6,9 +6,9 @@ enum ExpressionField: string
 {
     case MINUTE = 'minute';
     case HOUR = 'hour';
-    case MONTHDAY = 'dayOfMonth';
+    case DAY_OF_MONTH = 'dayOfMonth';
     case MONTH = 'month';
-    case WEEKDAY = 'dayOfWeek';
+    case DAY_OF_WEEK = 'dayOfWeek';
 
     /**
      * Named constructor from Array parsing integer offset.
@@ -18,9 +18,9 @@ enum ExpressionField: string
         return match ($position) {
             0 => ExpressionField::MINUTE,
             1 => ExpressionField::HOUR,
-            2 => ExpressionField::MONTHDAY,
+            2 => ExpressionField::DAY_OF_MONTH,
             3 => ExpressionField::MONTH,
-            4 => ExpressionField::WEEKDAY,
+            4 => ExpressionField::DAY_OF_WEEK,
             default => throw SyntaxError::dueToInvalidPosition($position),
         };
     }
@@ -30,13 +30,17 @@ enum ExpressionField: string
      */
     public function validator(): CronFieldValidator
     {
-        return match ($this) {
+        static $validators;
+
+        $validators[$this->value] ??= match ($this) {
             self::MINUTE => new MinuteValidator(),
             self::HOUR => new HourValidator(),
-            self::MONTHDAY => new DayOfMonthValidator(),
+            self::DAY_OF_MONTH => new DayOfMonthValidator(),
             self::MONTH => new MonthValidator(),
-            default => new DayOfWeekValidator(),
+            default => new DayOfWeekValidator(), // self::DAY_OF_WEEK
         };
+
+        return $validators[$this->value];
     }
 
     /**
@@ -46,6 +50,6 @@ enum ExpressionField: string
      */
     public static function orderedFields(): array
     {
-        return [self::MONTH, self::MONTHDAY, self::WEEKDAY, self::HOUR, self::MINUTE];
+        return [self::MONTH, self::DAY_OF_MONTH, self::DAY_OF_WEEK, self::HOUR, self::MINUTE];
     }
 }

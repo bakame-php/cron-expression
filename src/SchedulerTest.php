@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bakame\Cron;
 
+use DateInterval;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -637,7 +638,7 @@ final class SchedulerTest extends TestCase
         $this->expectException(SyntaxError::class);
 
         iterator_to_array(
-            Scheduler::fromSystemTimezone('* * * * *')->yieldRunsAfter('now', '-3 days')
+            Scheduler::fromSystemTimezone('* * * * *')->yieldRunsAfter('now', DateInterval::createFromDateString('-3 days'))
         );
     }
 

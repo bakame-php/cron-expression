@@ -88,9 +88,9 @@ final class ExpressionParser
         $defaultValues = [
             ExpressionField::MINUTE->value => '*',
             ExpressionField::HOUR->value => '*',
-            ExpressionField::MONTHDAY->value => '*',
+            ExpressionField::DAY_OF_MONTH->value => '*',
             ExpressionField::MONTH->value => '*',
-            ExpressionField::WEEKDAY->value => '*',
+            ExpressionField::DAY_OF_WEEK->value => '*',
         ];
 
         if ([] !== array_diff_key($fields, $defaultValues)) {
@@ -102,9 +102,9 @@ final class ExpressionParser
         return implode(' ', [
             $fields[ExpressionField::MINUTE->value],
             $fields[ExpressionField::HOUR->value],
-            $fields[ExpressionField::MONTHDAY->value],
+            $fields[ExpressionField::DAY_OF_MONTH->value],
             $fields[ExpressionField::MONTH->value],
-            $fields[ExpressionField::WEEKDAY->value],
+            $fields[ExpressionField::DAY_OF_WEEK->value],
         ]);
     }
 

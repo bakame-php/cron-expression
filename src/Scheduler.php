@@ -20,12 +20,13 @@ final class Scheduler implements CronScheduler
     private int $maxIterationCount;
     private int $startDatePresence;
 
-    /** Internal variables to optimize calculating runs */
+    /** Internal variables to optimize runs calculation */
 
     /** @var array<string, array{0:string, 1:CronFieldValidator}>  */
     private array $calculatedFields;
-    private bool $combineRuns = false;
+    private bool $isWeekAndMonthDaysExpression;
     private string|null $minuteFieldExpression;
+    private CronFieldValidator $minuteFieldValidator;
 
     public function __construct(
         CronExpression|string $expression,
@@ -37,7 +38,8 @@ final class Scheduler implements CronScheduler
         $this->timezone = $this->filterTimezone($timezone);
         $this->startDatePresence = $this->filterStartDatePresence($startDatePresence);
         $this->maxIterationCount = $this->filterMaxIterationCount($maxIterationCount);
-        $this->init();
+
+        $this->initialize();
     }
 
     private function filterExpression(CronExpression|string $expression): CronExpression
@@ -76,7 +78,7 @@ final class Scheduler implements CronScheduler
         return $startDatePresence;
     }
 
-    private function init(): void
+    private function initialize(): void
     {
         // We don't have to satisfy * fields
         $this->calculatedFields = [];
@@ -88,8 +90,9 @@ final class Scheduler implements CronScheduler
             }
         }
 
-        $this->combineRuns = isset($this->calculatedFields[ExpressionField::MONTHDAY->value], $this->calculatedFields[ExpressionField::WEEKDAY->value]);
+        $this->isWeekAndMonthDaysExpression = isset($this->calculatedFields[ExpressionField::DAY_OF_MONTH->value], $this->calculatedFields[ExpressionField::DAY_OF_WEEK->value]);
         $this->minuteFieldExpression = $this->calculatedFields[ExpressionField::MINUTE->value][0] ?? null;
+        $this->minuteFieldValidator = ExpressionField::MINUTE->validator();
     }
 
     public static function fromUTC(CronExpression|string $expression): self
@@ -177,13 +180,15 @@ final class Scheduler implements CronScheduler
             $invert = true;
         }
 
-        return $this->calculateRun($startDate, $nth, $this->startDatePresence, $invert);
+        return $this->nextRun($this->toDateTimeImmutable($startDate), $nth, $this->startDatePresence, $invert);
     }
 
     public function isDue(DateTimeInterface|string $when): bool
     {
         try {
-            return $this->calculateRun($when, 0, self::INCLUDE_START_DATE, false) == $this->toDateTimeImmutable($when);
+            $when = $this->toDateTimeImmutable($when);
+
+            return $this->nextRun($when, 0, self::INCLUDE_START_DATE, false) === $when;
         } catch (Throwable) {
             return false;
         }
@@ -193,16 +198,18 @@ final class Scheduler implements CronScheduler
     {
         $max = max(0, $recurrences);
         $i = 0;
-        $fieldValidator = ExpressionField::MINUTE->validator();
+        $startDate = $this->toDateTimeImmutable($startDate);
         while ($i < $max) {
             try {
-                $run = $this->calculateRun($startDate, 0, $this->startDatePresence, false);
+                $run = $this->nextRun($startDate, 0, $this->startDatePresence, false);
+                // @codeCoverageIgnoreStart
             } catch (UnableToProcessRun) {
                 break;
             }
+            // @codeCoverageIgnoreEnd
             yield $run;
 
-            $startDate = $fieldValidator->increment($run, $this->minuteFieldExpression);
+            $startDate = $this->minuteFieldValidator->increment($run, $this->minuteFieldExpression);
             ++$i;
         }
     }
@@ -211,16 +218,18 @@ final class Scheduler implements CronScheduler
     {
         $max = max(0, $recurrences);
         $i = 0;
-        $fieldValidator = ExpressionField::MINUTE->validator();
+        $endDate = $this->toDateTimeImmutable($endDate);
         while ($i < $max) {
             try {
-                $run = $this->calculateRun($endDate, 0, $this->startDatePresence, true);
+                $run = $this->nextRun($endDate, 0, $this->startDatePresence, true);
+                // @codeCoverageIgnoreStart
             } catch (UnableToProcessRun) {
                 break;
             }
+            // @codeCoverageIgnoreEnd
             yield $run;
 
-            $endDate = $fieldValidator->decrement($run, $this->minuteFieldExpression);
+            $endDate = $this->minuteFieldValidator->decrement($run, $this->minuteFieldExpression);
             ++$i;
         }
     }
@@ -228,59 +237,15 @@ final class Scheduler implements CronScheduler
     public function yieldRunsAfter(DateTimeInterface|string $startDate, DateInterval|string $interval): Generator
     {
         $startDate = $this->toDateTimeImmutable($startDate);
-        $endDate = $startDate->add($this->toDateInterval($interval));
-        if ($endDate < $startDate) {
-            throw new SyntaxError('The start date MUST be lesser than or equal to the end date.');
-        }
 
-        $fieldValidator = ExpressionField::MINUTE->validator();
-        $presence = $this->startDatePresence;
-        $run = $startDate;
-        while ($endDate > $run) {
-            try {
-                $run = $this->calculateRun($startDate, 0, $presence, false);
-            } catch (UnableToProcessRun) {
-                break;
-            }
-
-            if ($endDate < $run) {
-                break;
-            }
-
-            yield $run;
-
-            $startDate = $fieldValidator->increment($run, $this->minuteFieldExpression);
-            $presence = self::INCLUDE_START_DATE;
-        }
+        return $this->runsAfter($startDate, $startDate->add($this->toDateInterval($interval)));
     }
 
     public function yieldRunsBefore(DateTimeInterface|string $endDate, DateInterval|string $interval): Generator
     {
         $endDate = $this->toDateTimeImmutable($endDate);
-        $startDate = $endDate->sub($this->toDateInterval($interval));
-        if ($endDate < $startDate) {
-            throw new SyntaxError('The end date MUST be greater than or equal to the start date.');
-        }
 
-        $fieldValidator = ExpressionField::MINUTE->validator();
-        $presence = $this->startDatePresence;
-        $run = $endDate;
-        while ($startDate < $run) {
-            try {
-                $run = $this->calculateRun($endDate, 0, $presence, true);
-            } catch (UnableToProcessRun) {
-                break;
-            }
-
-            if ($startDate > $run) {
-                break;
-            }
-
-            yield $run;
-
-            $endDate = $fieldValidator->decrement($run, $this->minuteFieldExpression);
-            $presence = self::INCLUDE_START_DATE;
-        }
+        return $this->runsBefore($endDate, $endDate->sub($this->toDateInterval($interval)));
     }
 
     public function yieldRunsBetween(DateTimeInterface|string $startDate, DateTimeInterface|string $endDate): Generator
@@ -288,90 +253,11 @@ final class Scheduler implements CronScheduler
         $startDate = $this->toDateTimeImmutable($startDate);
         $endDate = $this->toDateTimeImmutable($endDate);
 
-        if ($endDate >= $startDate) {
-            return $this->yieldRunsAfter($startDate, $startDate->diff($endDate));
+        if ($startDate <= $endDate) {
+            return $this->runsAfter($startDate, $endDate);
         }
 
-        return $this->yieldRunsBefore($startDate, $endDate->diff($startDate));
-    }
-
-    /**
-     * Get the next or previous run date of the expression relative to a date.
-     *
-     * @param DateTimeInterface|string $startDate Relative calculation date
-     * @param int $nth Number of matches to skip before returning
-     * @param int $startDatePresence Set to self::INCLUDE_START_DATE to return the start date if eligible
-     *                               Set to self::EXCLUDE_START_DATE to never return the start date
-     * @param bool $invert Set to TRUE to go backwards
-     *
-     * @throws CronError on too many iterations
-     */
-    private function calculateRun(DateTimeInterface|string $startDate, int $nth, int $startDatePresence, bool $invert): DateTimeImmutable
-    {
-        $startDate = $this->toDateTimeImmutable($startDate);
-        if ($this->combineRuns) {
-            return $this->combineRuns($nth, $startDate, $invert);
-        }
-
-        $run = $startDate;
-        $i = 0;
-        $minuteFieldValidator = ExpressionField::MINUTE->validator();
-        while ($i < $this->maxIterationCount) {
-            start:
-            foreach ($this->calculatedFields as [$fieldExpression, $fieldValidator]) {
-                if (!$fieldValidator->isSatisfiedBy($fieldExpression, $run)) {
-                    $run = match ($invert) {
-                        true => $fieldValidator->decrement($run, $fieldExpression),
-                        default => $fieldValidator->increment($run, $fieldExpression),
-                    };
-                    ++$i;
-                    goto start;
-                }
-            }
-
-            if (($startDatePresence === self::INCLUDE_START_DATE || $run != $startDate) && 0 > --$nth) {
-                return $run;
-            }
-
-            $run = match ($invert) {
-                true => $minuteFieldValidator->decrement($run, $this->minuteFieldExpression),
-                default => $minuteFieldValidator->increment($run, $this->minuteFieldExpression),
-            };
-            ++$i;
-        }
-
-        // @codeCoverageIgnoreStart
-        throw UnableToProcessRun::dueToMaxIterationCountReached($this->maxIterationCount);
-        // @codeCoverageIgnoreEnd
-    }
-
-    /**
-     * @throws CronError
-     */
-    private function combineRuns(int $nth, DateTimeImmutable $startDate, bool $invert): DateTimeImmutable
-    {
-        $dayOfWeekScheduler = $this->withExpression($this->expression->withDayOfWeek('*'));
-        $dayOfMonthScheduler = $this->withExpression($this->expression->withDayOfMonth('*'));
-
-        $combinedRuns = match ($invert) {
-            true => array_merge(
-                iterator_to_array($dayOfMonthScheduler->yieldRunsBackward($startDate, $nth + 1), false),
-                iterator_to_array($dayOfWeekScheduler->yieldRunsBackward($startDate, $nth + 1), false)
-            ),
-            default => array_merge(
-                iterator_to_array($dayOfMonthScheduler->yieldRunsForward($startDate, $nth + 1), false),
-                iterator_to_array($dayOfWeekScheduler->yieldRunsForward($startDate, $nth + 1), false)
-            ),
-        };
-
-        usort(
-            $combinedRuns,
-            $invert ?
-                fn (DateTimeInterface $a, DateTimeInterface $b): int => $b <=> $a :
-                fn (DateTimeInterface $a, DateTimeInterface $b): int => $a <=> $b
-        );
-
-        return $combinedRuns[$nth];
+        return $this->runsBefore($startDate, $endDate);
     }
 
     /**
@@ -403,9 +289,148 @@ final class Scheduler implements CronScheduler
         }
 
         if (false === ($res = DateInterval::createFromDateString($interval))) {
-            throw new SyntaxError('The string is not a valid `DateInterval::createFromDateString` input.');
+            throw new SyntaxError('The string `'.$interval.'` is not a valid `DateInterval::createFromDateString` input.');
         }
 
         return $res;
+    }
+
+    /**
+     * @throws CronError
+     */
+    private function runsAfter(DateTimeImmutable $startDate, DateTimeImmutable $endDate): Generator
+    {
+        if ($endDate < $startDate) {
+            throw new SyntaxError('The start date MUST be lesser than or equal to the end date.');
+        }
+
+        $presence = $this->startDatePresence;
+        $run = $startDate;
+        while ($endDate > $run) {
+            try {
+                $run = $this->nextRun($startDate, 0, $presence, false);
+                // @codeCoverageIgnoreStart
+            } catch (UnableToProcessRun) {
+                break;
+            }
+            // @codeCoverageIgnoreEnd
+
+            if ($endDate < $run) {
+                break;
+            }
+
+            yield $run;
+
+            $startDate = $this->minuteFieldValidator->increment($run, $this->minuteFieldExpression);
+            $presence = self::INCLUDE_START_DATE;
+        }
+    }
+
+    /**
+     * @throws CronError
+     */
+    private function runsBefore(DateTimeImmutable $endDate, DateTimeImmutable $startDate): Generator
+    {
+        if ($endDate < $startDate) {
+            throw new SyntaxError('The end date MUST be greater than or equal to the start date.');
+        }
+
+        $presence = $this->startDatePresence;
+        $run = $endDate;
+        while ($startDate < $run) {
+            try {
+                $run = $this->nextRun($endDate, 0, $presence, true);
+                // @codeCoverageIgnoreStart
+            } catch (UnableToProcessRun) {
+                break;
+            }
+            // @codeCoverageIgnoreEnd
+
+            if ($startDate > $run) {
+                break;
+            }
+
+            yield $run;
+
+            $endDate = $this->minuteFieldValidator->decrement($run, $this->minuteFieldExpression);
+            $presence = self::INCLUDE_START_DATE;
+        }
+    }
+
+    /**
+     * Get the next or previous run date of the expression relative to a date.
+     *
+     * @param DateTimeImmutable $startDate Relative calculation date
+     * @param int $nth Number of matches to skip before returning
+     * @param int $startDatePresence Set to self::INCLUDE_START_DATE to return the start date if eligible
+     *                               Set to self::EXCLUDE_START_DATE to never return the start date
+     * @param bool $invert Set to TRUE to go backwards
+     *
+     * @throws CronError on too many iterations
+     */
+    private function nextRun(DateTimeImmutable $startDate, int $nth, int $startDatePresence, bool $invert): DateTimeImmutable
+    {
+        if ($this->isWeekAndMonthDaysExpression) {
+            return $this->nextWeekAndMonthDaysRun($nth, $startDate, $invert);
+        }
+
+        $run = $startDate;
+        $i = 0;
+        while ($i < $this->maxIterationCount) {
+            start:
+            foreach ($this->calculatedFields as [$fieldExpression, $fieldValidator]) {
+                if (!$fieldValidator->isSatisfiedBy($fieldExpression, $run)) {
+                    $run = match ($invert) {
+                        true => $fieldValidator->decrement($run, $fieldExpression),
+                        default => $fieldValidator->increment($run, $fieldExpression),
+                    };
+                    ++$i;
+                    goto start;
+                }
+            }
+
+            if (($startDatePresence === self::INCLUDE_START_DATE || $run !== $startDate) && 0 > --$nth) {
+                return $run;
+            }
+
+            $run = match ($invert) {
+                true => $this->minuteFieldValidator->decrement($run, $this->minuteFieldExpression),
+                default => $this->minuteFieldValidator->increment($run, $this->minuteFieldExpression),
+            };
+            ++$i;
+        }
+
+        // @codeCoverageIgnoreStart
+        throw UnableToProcessRun::dueToMaxIterationCountReached($this->maxIterationCount);
+        // @codeCoverageIgnoreEnd
+    }
+
+    /**
+     * @throws CronError
+     */
+    private function nextWeekAndMonthDaysRun(int $nth, DateTimeImmutable $startDate, bool $invert): DateTimeImmutable
+    {
+        $dayOfWeekScheduler = $this->withExpression($this->expression->withDayOfWeek('*'));
+        $dayOfMonthScheduler = $this->withExpression($this->expression->withDayOfMonth('*'));
+
+        $combinedRuns = match ($invert) {
+            true => array_merge(
+                iterator_to_array($dayOfMonthScheduler->yieldRunsBackward($startDate, $nth + 1), false),
+                iterator_to_array($dayOfWeekScheduler->yieldRunsBackward($startDate, $nth + 1), false)
+            ),
+            default => array_merge(
+                iterator_to_array($dayOfMonthScheduler->yieldRunsForward($startDate, $nth + 1), false),
+                iterator_to_array($dayOfWeekScheduler->yieldRunsForward($startDate, $nth + 1), false)
+            ),
+        };
+
+        usort(
+            $combinedRuns,
+            $invert ?
+                fn (DateTimeInterface $a, DateTimeInterface $b): int => $b <=> $a :
+                fn (DateTimeInterface $a, DateTimeInterface $b): int => $a <=> $b
+        );
+
+        return $combinedRuns[$nth];
     }
 }
