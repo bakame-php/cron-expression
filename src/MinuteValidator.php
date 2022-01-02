@@ -25,51 +25,34 @@ final class MinuteValidator extends FieldValidator
     public function increment(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
     {
         $date = $this->toDateTimeImmutable($date);
-
         if (null === $fieldExpression) {
             return $date->add(new DateInterval('PT1M'));
         }
 
-        /** @var array<int> $minutes */
-        $minutes = array_reduce(
-            str_contains($fieldExpression, ',') ? explode(',', $fieldExpression) : [$fieldExpression],
-            fn (array $minutes, string $part): array => array_merge($minutes, $this->getRangeForExpression($part, 59)),
-            []
-        );
-
         $currentMinute = (int) $date->format('i');
-        $minute = $minutes[$this->computePosition($currentMinute, $minutes, false)];
-
-        if ($currentMinute >= $minute) {
-            $date = $date->add(new DateInterval('PT1H'));
-
-            return $date->setTime((int) $date->format('H'), 0);
+        $minute = $this->computeTimeFieldRangeValue($currentMinute, $fieldExpression, false);
+        if ($currentMinute < $minute) {
+            return $date->setTime((int) $date->format('H'), $minute);
         }
 
-        return $date->setTime((int) $date->format('H'), $minute);
+        $date = $date->add(new DateInterval('PT1H'));
+
+        return $date->setTime((int) $date->format('H'), 0);
     }
 
     public function decrement(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
     {
         $date = $this->toDateTimeImmutable($date);
-
         if (null === $fieldExpression) {
             return $date->sub(new DateInterval('PT1M'));
         }
 
-        /** @var array<int> $minutes */
-        $minutes = array_reduce(
-            str_contains($fieldExpression, ',') ? explode(',', $fieldExpression) : [$fieldExpression],
-            fn (array $minutes, string $part): array => array_merge($minutes, $this->getRangeForExpression($part, 59)),
-            []
-        );
-
         $currentMinute = (int) $date->format('i');
-        $minute = $minutes[$this->computePosition($currentMinute, $minutes, true)];
+        $minute = $this->computeTimeFieldRangeValue($currentMinute, $fieldExpression, true);
         if ($minute < $currentMinute) {
             return $date->setTime((int) $date->format('H'), $minute);
         }
 
-        return $date->sub(new DateInterval('PT'.((int) $date->format('j') + 1).'M'));
+        return $date->sub(new DateInterval('PT'.($currentMinute + 1).'M'));
     }
 }

@@ -38,14 +38,8 @@ final class HourValidator extends FieldValidator
             ;
         }
 
-        $hours = array_reduce(
-            str_contains($fieldExpression, ',') ? explode(',', $fieldExpression) : [$fieldExpression],
-            fn (array $hours, string $part): array => array_merge($hours, $this->getRangeForExpression($part, 23)),
-            []
-        );
-
         $currentHour = (int) $date->format('H');
-        $hour = $hours[$this->computePosition($currentHour, $hours, false)];
+        $hour = $this->computeTimeFieldRangeValue($currentHour, $fieldExpression, false);
         if ($hour < $currentHour) {
             return $date->setTime(0, 0)->add(new DateInterval('P1D'));
         }
@@ -68,15 +62,8 @@ final class HourValidator extends FieldValidator
                 ->setTimezone($date->getTimezone());
         }
 
-        /** @var array<int> $hours */
-        $hours = array_reduce(
-            str_contains($fieldExpression, ',') ? explode(',', $fieldExpression) : [$fieldExpression],
-            fn (array $hours, string $part): array => array_merge($hours, $this->getRangeForExpression($part, 23)),
-            []
-        );
-
         $currentHour = (int) $date->format('H');
-        $hour = $hours[$this->computePosition($currentHour, $hours, true)];
+        $hour = $this->computeTimeFieldRangeValue($currentHour, $fieldExpression, true);
         if ($hour > $currentHour) {
             return $date->setTime(0, 0)->sub(new DateInterval('PT1M'));
         }

@@ -28,16 +28,14 @@ final class DayOfWeekValidator extends FieldValidator
     protected const RANGE_END = 7;
 
     protected array $literals = [
-        '1' => 'MON',
-        '2' => 'TUE',
-        '3' => 'WED',
-        '4' => 'THU',
-        '5' => 'FRI',
-        '6' => 'SAT',
-        '7' => 'SUN',
+        1 => 'MON',
+        2 => 'TUE',
+        3 => 'WED',
+        4 => 'THU',
+        5 => 'FRI',
+        6 => 'SAT',
+        7 => 'SUN',
     ];
-    /** @var array<int> */
-    private array $nthRange = [1, 2, 3, 4, 5];
 
     protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool
     {
@@ -66,28 +64,17 @@ final class DayOfWeekValidator extends FieldValidator
 
         // Handle # hash tokens
         if (str_contains($fieldExpression, '#')) {
-            [$weekday, $nth] = explode('#', $fieldExpression);
-
-            if (!is_numeric($nth)) {
-                throw SyntaxError::dueToInvalidWeekday($nth);
+            if (!$this->handleSharpExpression($fieldExpression)) {
+                throw SyntaxError::dueToInvalidExpression($fieldExpression);
             }
 
+            [$weekday, $nth] = explode('#', $fieldExpression);
             $nth = (int) $nth;
-            // 0 and 7 are both Sunday, however 7 matches date('N') format ISO-8601
             if ($weekday === '0') {
                 $weekday = '7';
             }
 
             $weekday = (int) $this->convertLiterals($weekday);
-
-            // Validate the hash fields
-            if ($weekday < 0 || $weekday > 7) {
-                throw SyntaxError::dueToUnsupportedWeekday($weekday);
-            }
-
-            if (!in_array($nth, $this->nthRange, true)) {
-                throw SyntaxError::dueToOutOfRangeWeekday($nth);
-            }
 
             // The current weekday must match the targeted weekday to proceed
             if ((int) $date->format('N') !== $weekday) {
@@ -149,10 +136,22 @@ final class DayOfWeekValidator extends FieldValidator
 
     private function handleSharpExpression(string $fieldExpression): bool
     {
-        [$first, $last] = explode('#', $fieldExpression);
+        [$weekday, $nth] = explode('#', $fieldExpression);
+        if (!is_numeric($nth)) {
+            return false;
+        }
 
-        return parent::isValid($this->convertLiterals($first))
-            && is_numeric($last)
-            && in_array((int) $last, $this->nthRange, true);
+        $nth = (int) $nth;
+        // 0 and 7 are both Sunday, however 7 matches date('N') format ISO-8601
+        if ($weekday === '0') {
+            $weekday = '7';
+        }
+
+        $weekday = (int) $this->convertLiterals($weekday);
+
+        return match (true) {
+            $weekday < 0 || $weekday > 7 => false,
+            default => in_array($nth, [1, 2, 3, 4, 5], true),
+        };
     }
 }

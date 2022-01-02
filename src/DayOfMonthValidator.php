@@ -44,12 +44,8 @@ final class DayOfMonthValidator extends FieldValidator
 
         /** @var DateTime $target */
         $target = DateTime::createFromFormat('Y-n-j', "$currentYear-$currentMonth-$targetDay");
-        if (6 > (int) $target->format('N')) {
-            return $target->format('j') === $currentDay;
-        }
-
         $lastDayOfMonth = (int) $target->format('t');
-        foreach ([-1, 1, -2, 2] as $i) {
+        foreach ([0, -1, 1, -2, 2] as $i) {
             $adjusted = $targetDay + $i;
             if ($adjusted > 0 && $adjusted <= $lastDayOfMonth) {
                 $target->setDate($currentYear, $currentMonth, $adjusted);
@@ -59,7 +55,7 @@ final class DayOfMonthValidator extends FieldValidator
             }
         }
 
-        return $target->format('j') === $date->format('j');
+        return $target->format('j') === $currentDay;
     }
 
     protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool

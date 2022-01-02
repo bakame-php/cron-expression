@@ -143,18 +143,44 @@ abstract class FieldValidator implements CronFieldValidator
         return in_array($dateValue, range($rangeStart, $rangeEnd, $step), true);
     }
 
+    protected function convertLiterals(string $value): string
+    {
+        if ([] === $this->literals) {
+            return $value;
+        }
+
+        $key = array_search(strtoupper($value), $this->literals, true);
+        if ($key === false) {
+            return $value;
+        }
+
+        return (string) $key;
+    }
+
+    protected function computeTimeFieldRangeValue(int $currentValue, string $fieldExpression, bool $invert): int
+    {
+        /** @var array<int> $ranges */
+        $ranges = array_reduce(
+            str_contains($fieldExpression, ',') ? explode(',', $fieldExpression) : [$fieldExpression],
+            fn (array $ranges, string $expression): array => array_merge($ranges, $this->getRangeValuesFromExpression($expression, static::RANGE_END)),
+            []
+        );
+
+        return $ranges[$this->computeTimeFieldRangeOffset($currentValue, $ranges, $invert)];
+    }
+
     /**
      * Returns a range of values for the given cron expression.
      *
      * @return array<int>
      */
-    protected function getRangeForExpression(string $expression, int $max): array
+    protected function getRangeValuesFromExpression(string $expression, int $max): array
     {
         $expression = $this->convertLiterals($expression);
         if (str_contains($expression, ',')) {
             return array_reduce(
                 explode(',', $expression),
-                fn (array $values, string $range): array => array_merge($values, $this->getRangeForExpression($range, static::RANGE_END)),
+                fn (array $values, string $range): array => array_merge($values, $this->getRangeValuesFromExpression($range, static::RANGE_END)),
                 []
             );
         }
@@ -182,21 +208,7 @@ abstract class FieldValidator implements CronFieldValidator
         return range((int) $offset, (int) $to, $step);
     }
 
-    protected function convertLiterals(string $value): string
-    {
-        if ([] === $this->literals) {
-            return $value;
-        }
-
-        $key = array_search(strtoupper($value), $this->literals, true);
-        if ($key === false) {
-            return $value;
-        }
-
-        return (string) $key;
-    }
-
-    protected function computePosition(int $currentValue, array $references, bool $invert): int
+    protected function computeTimeFieldRangeOffset(int $currentValue, array $references, bool $invert): int
     {
         $nbField = count($references);
         $position = $invert ? $nbField - 1 : 0;
