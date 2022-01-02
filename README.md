@@ -72,13 +72,13 @@ var_export(ExpressionParser::parse('3-59/15 6-12 */15 1 2-5'));
 Each array offset is representative of a cron expression field, The `Bakame\Cron\ExpressionField` backed enum exposes those 
 offsets via descriptive cases, following the table below:
 
-| CRON field   | array offset | ExpressionField Enum        |
-|--------------|--------------|-----------------------------|
-| minute       | `minute`     | `ExpressionField::MINUTE`   |
-| hour         | `hour`       | `ExpressionField::HOUR`     |
-| day of month | `dayOfMonth` | `ExpressionField::MONTHDAY` |
-| month        | `month`      | `ExpressionField::MONTH`    |
-| day of week  | `dayOfWeek`  | `ExpressionField::WEEKDAY`  |
+| CRON field   | array offset | ExpressionField Enum           |
+|--------------|--------------|--------------------------------|
+| minute       | `minute`     | `ExpressionField::MINUTE`      |
+| hour         | `hour`       | `ExpressionField::HOUR`        |
+| day of month | `dayOfMonth` | `ExpressionField::DAY_OF_WEEK` |
+| month        | `month`      | `ExpressionField::MONTH`       |
+| day of week  | `dayOfWeek`  | `ExpressionField::DAY_OF_WEEK` |
 
 ```php
 <?php
