@@ -67,7 +67,7 @@ final class ExpressionParser
         }
 
         if ([] !== $errors) {
-            throw SyntaxError::dueToInvalidFieldValue($errors);
+            throw SyntaxError::dueToInvalidFieldExpression($errors);
         }
 
         return array_combine(array_map(fn (ExpressionField $field): string => $field->value, ExpressionField::cases()), $fields);

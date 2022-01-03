@@ -38,10 +38,10 @@ final class SyntaxError extends InvalidArgumentException implements CronError
     /**
      * @param array<string> $errors
      */
-    public static function dueToInvalidFieldValue(array $errors): self
+    public static function dueToInvalidFieldExpression(array $errors): self
     {
         $exception = new self('Invalid CRON expression value');
-        $exception->errors = array_map(fn (string $invalidFieldValue): string => 'Invalid or unsupported value `'.$invalidFieldValue.'`.', $errors);
+        $exception->errors = array_map(fn (string $fieldExpression): string => 'Invalid or unsupported value `'.$fieldExpression.'`.', $errors);
 
         return $exception;
     }
@@ -63,21 +63,6 @@ final class SyntaxError extends InvalidArgumentException implements CronError
     public static function dueToInvalidStartDatePresence(): self
     {
         return new self('Unsupported or invalid start date presence value.');
-    }
-
-    public static function dueToInvalidWeekday(int|string $nth): self
-    {
-        return new self("Hashed weekdays must be numeric, $nth given");
-    }
-
-    public static function dueToUnsupportedWeekday(int|string $weekday): self
-    {
-        return new self("Weekday must be a value between 0 and 7. $weekday given");
-    }
-
-    public static function dueToOutOfRangeWeekday(int $nth): self
-    {
-        return new self("There are never more than 5 or less than 1 of a given weekday in a month, $nth given");
     }
 
     public static function dueToInvalidMaxIterationCount(int $count): self
