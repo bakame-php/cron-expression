@@ -12,12 +12,13 @@ All Notable changes to `cron` will be documented in this file
 
 - Change Character precedence for `,` to allow more CRON expression. see [#122](https://github.com/dragonmantank/cron-expression/pull/122/)
 - Improve results when both day of month and day of week are used. see [#121](https://github.com/dragonmantank/cron-expression/pull/121/)
-- Improve `Scheduler::yield*` methods implementations.
-- Improve `Scheduler` internal codebase.
 - **[BC Break]** `ExpressionField::MONTHDAY` is renamed `ExpressionField::DAY_OF_MONTH`
 - **[BC Break]** `ExpressionField::WEEKDAY` is renamed `ExpressionField::DAY_OF_WEEK`
 - **[BC Break]** `SyntaxError` constructor is made private. It can only be accessed via named constructors. Named constructors are revised.
+- Improve `Scheduler` internal codebase.
 - **[BC Break]** `Scheduler::yield*` methods will throw if the `$recurrences` value is not a positive integer or `0`.
+- **[BC Break]** `Scheduler::INCLUDE_START_DATE` and `Scheduler::EXCLUDE_START_DATE` are replaced by an Enum `StartDate`
+- **[BC Break]** The `$startDatePresence` property is now required when instantiating the `Scheduler` class.
 
 ### Deprecated
 

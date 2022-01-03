@@ -235,35 +235,33 @@ To determine the next running time for a CRON expression the package uses the `B
 To work as expected this class needs:
 
 - a CRON Expression ( as a string or as a `Expression` object)
-- the Scheduler working timezone as a PHP `DateTimeZone` or  the timezone string name.
-- to know if the `startDate` if eligible should be present in the results.
-- the maximum iteration count to use to resolve the running time. If this value is exceeded the calculation will bail out.
+- a timezone as a PHP `DateTimeZone` instance or the timezone string name.
+- to know if the `startDate` if eligible should be present in the results via a `StartDate` enum with two values `StartDate::INCLUDED` and `StartDate::EXCLUDED`.
 
 To ease instantiating the `Scheduler`, it comes bundle with two named constructors around timezone usage:  
 
 - `Scheduler::fromUTC`: instantiate a scheduler using the `UTC` timezone.
 - `Scheduler::fromSystemTimezone`: instantiate a scheduler using the underlying system timezone
 
+**NOTICE: By default, the named constructors exclude the start date from the results.**
+
 ```php
 <?php
 
 use Bakame\Cron\Expression;
 use Bakame\Cron\Scheduler;
-
+use Bakame\Cron\StartDate;
 require_once '/vendor/autoload.php';
 
 // You can define all properties on instantiation
 $scheduler = new Scheduler(
     new Expression('0 7 * * *'), 
     new DateTimeZone('UTC'),
-    Scheduler::INCLUDE_START_DATE,
-    2000
+    StartDate::INCLUDED
  );
 
 // Or we can use a named constructor and the scheduler configuration methods
-$scheduler = Scheduler::fromUTC('0 7 * * *')
-    ->includeStartDate()
-    ->withMaxIterationCount(2000);
+$scheduler = Scheduler::fromUTC('0 7 * * *')->includeStartDate();
 
 //both instantiated object are equals.
 ```
