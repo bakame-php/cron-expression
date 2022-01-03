@@ -21,11 +21,6 @@ interface CronScheduler
     public function timezone(): DateTimeZone;
 
     /**
-     * Returns the scheduler maximun iteration count.
-     */
-    public function maxIterationCount(): int;
-
-    /**
      * Tells whether to include or not the relative time when calculating the next run.
      */
     public function isStartDateExcluded(): bool;
@@ -41,11 +36,6 @@ interface CronScheduler
     public function withTimezone(DateTimeZone $timezone): self;
 
     /**
-     * Set the max iteration count of the CRON scheduler.
-     */
-    public function withMaxIterationCount(int $maxIterationCount): self;
-
-    /**
      * Include the relative time in the results if possible.
      */
     public function includeStartDate(): self;
@@ -54,6 +44,16 @@ interface CronScheduler
      * Exclude the relative time in the results.
      */
     public function excludeStartDate(): self;
+
+    /**
+     * Determine if the cron is due to run based on a specific date.
+     * This method assumes that the current number of seconds are irrelevant, and should be called once per minute.
+     *
+     * @param DateTimeInterface|string $when Specific date
+     *                                       If the date is expressed with a string,
+     *                                       the scheduler will assume the date uses the underlying system timezone
+     */
+    public function isDue(DateTimeInterface|string $when): bool;
 
     /**
      * Get a run date relative to a specific date.
@@ -71,16 +71,6 @@ interface CronScheduler
      * @throws CronError on too many iterations
      */
     public function run(DateTimeInterface|string $startDate, int $nth = 0): DateTimeImmutable;
-
-    /**
-     * Determine if the cron is due to run based on a specific date.
-     * This method assumes that the current number of seconds are irrelevant, and should be called once per minute.
-     *
-     * @param DateTimeInterface|string $when Specific date
-     *                                       If the date is expressed with a string,
-     *                                       the scheduler will assume the date uses the underlying system timezone
-     */
-    public function isDue(DateTimeInterface|string $when): bool;
 
     /**
      * Returns multiple run dates ending at most at the specific ending date and ending at most after the specified

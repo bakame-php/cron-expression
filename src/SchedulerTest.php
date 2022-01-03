@@ -211,12 +211,7 @@ final class SchedulerTest extends TestCase
     public function testProvidesMultipleRunDatesForTheFarFuture(): void
     {
         // Fails with the default 1000 iteration limit
-        $cron = Scheduler::fromSystemTimezone(new Expression('0 0 12 1 *'));
-        $cron = $cron->includeStartDate();
-        self::assertSame($cron, $cron->withMaxIterationCount($cron->maxIterationCount()));
-
-        $newCron = $cron->withMaxIterationCount(2000);
-        self::assertNotEquals($cron, $newCron);
+        $cron = Scheduler::fromSystemTimezone(new Expression('0 0 12 1 *'))->includeStartDate();
 
         self::assertEquals([
             new DateTime('2016-01-12 00:00:00'),
@@ -228,7 +223,7 @@ final class SchedulerTest extends TestCase
             new DateTime('2022-01-12 00:00:00'),
             new DateTime('2023-01-12 00:00:00'),
             new DateTime('2024-01-12 00:00:00'),
-        ], iterator_to_array($newCron->yieldRunsForward('2015-04-28 00:00:00', 9)));
+        ], iterator_to_array($cron->yieldRunsForward('2015-04-28 00:00:00', 9)));
     }
 
     public function testCanIterateOverNextRuns(): void
@@ -331,13 +326,6 @@ final class SchedulerTest extends TestCase
         $cron->run('foobar');
     }
 
-    public function testThrowsIfMaxIterationCountIsNegative(): void
-    {
-        $this->expectException(SyntaxError::class);
-
-        new Scheduler(new Expression('* * * * *'), 'Africa/Nairobi', Scheduler::EXCLUDE_START_DATE, -1);
-    }
-
     /**
      * Makes sure that 00 is considered a valid value for 0-based fields
      * cronie allows numbers with a leading 0, so adding support for this as well.
@@ -422,12 +410,11 @@ final class SchedulerTest extends TestCase
 
     public function testChangingTheSchedulerProperties(): void
     {
-        $initial = new Scheduler('0 7 * * *', 'Africa/Nairobi', Scheduler::EXCLUDE_START_DATE, 2000);
+        $initial = new Scheduler('0 7 * * *', 'Africa/Nairobi', Scheduler::EXCLUDE_START_DATE);
 
         self::assertSame($initial, $initial->withExpression($initial->expression()));
         self::assertSame($initial, $initial->withTimezone($initial->timezone()));
         self::assertSame($initial, $initial->excludeStartDate());
-        self::assertSame($initial, $initial->withMaxIterationCount($initial->maxIterationCount()));
         self::assertTrue($initial->isStartDateExcluded());
 
         $includeStartDate = $initial->includeStartDate();
@@ -435,7 +422,6 @@ final class SchedulerTest extends TestCase
         self::assertNotEquals($initial, $initial->withExpression(new Expression('0 5 * * *')));
         self::assertNotEquals($initial, $initial->withTimezone(new DateTimeZone('Africa/Dakar')));
         self::assertNotEquals($initial, $includeStartDate);
-        self::assertNotEquals($initial, $initial->withMaxIterationCount(1000));
         self::assertFalse($includeStartDate->isStartDateExcluded());
         self::assertSame($includeStartDate, $includeStartDate->includeStartDate());
         self::assertEquals($initial, $includeStartDate->excludeStartDate());
@@ -451,7 +437,7 @@ final class SchedulerTest extends TestCase
 
     public function testIsDueReturnsFalseWithBrokenInput(): void
     {
-        $scheduler = new Scheduler('0 7 * * *', 'Africa/Nairobi', Scheduler::EXCLUDE_START_DATE, 2000);
+        $scheduler = new Scheduler('0 7 * * *', 'Africa/Nairobi', Scheduler::EXCLUDE_START_DATE);
 
         self::assertFalse($scheduler->isDue('foobar'));
     }
@@ -462,7 +448,6 @@ final class SchedulerTest extends TestCase
 
         self::assertEquals('0 7 * * *', $scheduler->expression()->toString());
         self::assertEquals('UTC', $scheduler->timezone()->getName());
-        self::assertEquals(1000, $scheduler->maxIterationCount());
         self::assertTrue($scheduler->isStartDateExcluded());
     }
 
@@ -474,7 +459,6 @@ final class SchedulerTest extends TestCase
 
         self::assertEquals('0 7 * * *', $scheduler->expression()->toString());
         self::assertEquals('Africa/Lagos', $scheduler->timezone()->getName());
-        self::assertEquals(1000, $scheduler->maxIterationCount());
         self::assertTrue($scheduler->isStartDateExcluded());
 
         date_default_timezone_set($currentTimezone);

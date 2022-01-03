@@ -17,7 +17,6 @@ final class Scheduler implements CronScheduler
 
     private CronExpression $expression;
     private DateTimeZone $timezone;
-    private int $maxIterationCount;
     private int $startDatePresence;
 
     /** Internal variables to optimize runs calculation */
@@ -30,13 +29,11 @@ final class Scheduler implements CronScheduler
     public function __construct(
         CronExpression|string $expression,
         DateTimeZone|string $timezone,
-        int $startDatePresence = Scheduler::EXCLUDE_START_DATE,
-        int $maxIterationCount = 1000
+        int $startDatePresence = Scheduler::EXCLUDE_START_DATE
     ) {
         $this->expression = $this->filterExpression($expression);
         $this->timezone = $this->filterTimezone($timezone);
         $this->startDatePresence = $this->filterStartDatePresence($startDatePresence);
-        $this->maxIterationCount = $this->filterMaxIterationCount($maxIterationCount);
 
         $this->initialize();
     }
@@ -57,15 +54,6 @@ final class Scheduler implements CronScheduler
         }
 
         return $timezone;
-    }
-
-    private function filterMaxIterationCount(int $maxIterationCount): int
-    {
-        if ($maxIterationCount < 0) {
-            throw SyntaxError::dueToInvalidMaxIterationCount($maxIterationCount);
-        }
-
-        return $maxIterationCount;
     }
 
     private function filterStartDatePresence(int $startDatePresence): int
@@ -89,7 +77,10 @@ final class Scheduler implements CronScheduler
             }
         }
 
-        $this->includeDayOfWeekAndDayOfMonthExpression = isset($this->calculatedFields[ExpressionField::DAY_OF_MONTH->value], $this->calculatedFields[ExpressionField::DAY_OF_WEEK->value]);
+        $this->includeDayOfWeekAndDayOfMonthExpression = isset(
+            $this->calculatedFields[ExpressionField::DAY_OF_MONTH->value],
+            $this->calculatedFields[ExpressionField::DAY_OF_WEEK->value]
+        );
         $this->minuteFieldExpression = $this->calculatedFields[ExpressionField::MINUTE->value][0] ?? null;
     }
 
@@ -113,11 +104,6 @@ final class Scheduler implements CronScheduler
         return $this->timezone;
     }
 
-    public function maxIterationCount(): int
-    {
-        return $this->maxIterationCount;
-    }
-
     public function isStartDateExcluded(): bool
     {
         return self::EXCLUDE_START_DATE === $this->startDatePresence;
@@ -130,7 +116,7 @@ final class Scheduler implements CronScheduler
             return $this;
         }
 
-        return new self($expression, $this->timezone, $this->startDatePresence, $this->maxIterationCount);
+        return new self($expression, $this->timezone, $this->startDatePresence);
     }
 
     public function withTimezone(DateTimeZone|string $timezone): self
@@ -140,16 +126,7 @@ final class Scheduler implements CronScheduler
             return $this;
         }
 
-        return new self($this->expression, $timezone, $this->startDatePresence, $this->maxIterationCount);
-    }
-
-    public function withMaxIterationCount(int $maxIterationCount): self
-    {
-        if ($maxIterationCount === $this->maxIterationCount) {
-            return $this;
-        }
-
-        return new self($this->expression, $this->timezone, $this->startDatePresence, $maxIterationCount);
+        return new self($this->expression, $timezone, $this->startDatePresence);
     }
 
     public function includeStartDate(): self
@@ -158,7 +135,7 @@ final class Scheduler implements CronScheduler
             return $this;
         }
 
-        return new self($this->expression, $this->timezone, self::INCLUDE_START_DATE, $this->maxIterationCount);
+        return new self($this->expression, $this->timezone, self::INCLUDE_START_DATE);
     }
 
     public function excludeStartDate(): self
@@ -167,7 +144,7 @@ final class Scheduler implements CronScheduler
             return $this;
         }
 
-        return new self($this->expression, $this->timezone, self::EXCLUDE_START_DATE, $this->maxIterationCount);
+        return new self($this->expression, $this->timezone, self::EXCLUDE_START_DATE);
     }
 
     public function run(DateTimeInterface|string $startDate, int $nth = 0): DateTimeImmutable
@@ -365,34 +342,33 @@ final class Scheduler implements CronScheduler
     /**
      * Get the next or previous run date of the expression relative to a date.
      *
-     * @param DateTimeImmutable $currentRun Relative calculation date
+     * @param DateTimeImmutable $date Relative calculation date
      * @param int $startDatePresence Set to self::INCLUDE_START_DATE to return the start date if eligible
      *                               Set to self::EXCLUDE_START_DATE to never return the start date
      * @param bool $invert Set to TRUE to go backwards
      *
      * @throws CronError on too many iterations
      */
-    private function nextRun(DateTimeImmutable $currentRun, int $startDatePresence, bool $invert): DateTimeImmutable
+    private function nextRun(DateTimeImmutable $date, int $startDatePresence, bool $invert): DateTimeImmutable
     {
         if ($this->includeDayOfWeekAndDayOfMonthExpression) {
-            return $this->nextDayOfWeekAndDayOfMonthRun($currentRun, $invert);
+            return $this->dayOfWeekAndDayOfMonthNextRun($date, $invert);
         }
 
-        $nextRun = $currentRun;
-        $i = 0;
-        while ($i < $this->maxIterationCount) {
+        $nextRun = $date;
+        do {
+            start:
             foreach ($this->calculatedFields as [$fieldExpression, $fieldValidator]) {
                 if (!$fieldValidator->isSatisfiedBy($fieldExpression, $nextRun)) {
                     $nextRun = match ($invert) {
                         true => $fieldValidator->decrement($nextRun, $fieldExpression),
                         default => $fieldValidator->increment($nextRun, $fieldExpression),
                     };
-                    ++$i;
-                    continue 2;
+                    goto start;
                 }
             }
 
-            if ($startDatePresence === self::INCLUDE_START_DATE || $nextRun !== $currentRun) {
+            if ($startDatePresence === self::INCLUDE_START_DATE || $nextRun !== $date) {
                 return $nextRun;
             }
 
@@ -400,18 +376,13 @@ final class Scheduler implements CronScheduler
                 true => ExpressionField::MINUTE->validator()->decrement($nextRun, $this->minuteFieldExpression),
                 default => ExpressionField::MINUTE->validator()->increment($nextRun, $this->minuteFieldExpression),
             };
-            ++$i;
-        } ;
-
-        // @codeCoverageIgnoreStart
-        throw UnableToProcessRun::dueToMaxIterationCountReached($this->maxIterationCount);
-        // @codeCoverageIgnoreEnd
+        } while (1);
     }
 
     /**
      * @throws CronError
      */
-    private function nextDayOfWeekAndDayOfMonthRun(DateTimeImmutable $startDate, bool $invert): DateTimeImmutable
+    private function dayOfWeekAndDayOfMonthNextRun(DateTimeImmutable $startDate, bool $invert): DateTimeImmutable
     {
         $dayOfWeekScheduler = $this->withExpression($this->expression->withDayOfWeek('*'));
         $dayOfMonthScheduler = $this->withExpression($this->expression->withDayOfMonth('*'));
