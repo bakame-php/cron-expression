@@ -208,6 +208,26 @@ final class SchedulerTest extends TestCase
         ], iterator_to_array($result, false));
     }
 
+    public function testYieldRunsForwardWillFailWithNegativeRecurrences(): void
+    {
+        $this->expectException(SyntaxError::class);
+
+        iterator_to_array(
+            Scheduler::fromSystemTimezone(new Expression('*/2 * * * *'))
+            ->yieldRunsForward('2008-11-09 00:00:00', -1)
+        );
+    }
+
+    public function testYieldRunsBackwardWillFailWithNegativeRecurrences(): void
+    {
+        $this->expectException(SyntaxError::class);
+
+        iterator_to_array(
+            Scheduler::fromSystemTimezone(new Expression('*/2 * * * *'))
+            ->yieldRunsBackward('2008-11-09 00:00:00', -1)
+        );
+    }
+
     public function testProvidesMultipleRunDatesForTheFarFuture(): void
     {
         // Fails with the default 1000 iteration limit

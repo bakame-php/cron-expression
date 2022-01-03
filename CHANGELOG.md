@@ -17,6 +17,7 @@ All Notable changes to `cron` will be documented in this file
 - **[BC Break]** `ExpressionField::MONTHDAY` is renamed `ExpressionField::DAY_OF_MONTH`
 - **[BC Break]** `ExpressionField::WEEKDAY` is renamed `ExpressionField::DAY_OF_WEEK`
 - **[BC Break]** `SyntaxError` constructor is made private. It can only be accessed via named constructors. Named constructors are revised.
+- **[BC Break]** `Scheduler::yield*` methods will throw if the `$recurrences` value is not a positive integer or `0`.
 
 ### Deprecated
 

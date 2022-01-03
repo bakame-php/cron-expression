@@ -70,6 +70,11 @@ final class SyntaxError extends InvalidArgumentException implements CronError
         return new self("maxIterationCount must be an integer greater or equal to 0. $count given");
     }
 
+    public static function dueToNegativeRecurrences(): self
+    {
+        return new self('The recurrence MUST be an integer greater or equal to 0.');
+    }
+
     public static function dueToIntervalStartDate(): self
     {
         return new self('The start date MUST be lesser than or equal to the end date.');
