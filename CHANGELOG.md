@@ -10,6 +10,24 @@ All Notable changes to `cron` will be documented in this file
 
 ### Fixed
 
+- None
+
+### Deprecate
+
+- None
+
+### Removed
+
+- None
+
+## [0.4.0] - 2022-01-03
+
+### Added
+
+- None
+
+### Fixed
+
 - Change Character precedence for `,` to allow more CRON expression. see [#122](https://github.com/dragonmantank/cron-expression/pull/122/)
 - Improve results when both day of month and day of week are used. see [#121](https://github.com/dragonmantank/cron-expression/pull/121/)
 - **[BC Break]** `ExpressionField::MONTHDAY` is renamed `ExpressionField::DAY_OF_MONTH`
@@ -74,7 +92,8 @@ All Notable changes to `cron` will be documented in this file
 
 Initial Release of `cron`
 
-[Next]: https://github.com/bakame-php/cron-expression/compare/0.3.0...master
+[Next]: https://github.com/bakame-php/cron-expression/compare/0.4.0...master
+[0.4.0]: https://github.com/bakame-php/cron-expression/compare/0.2.0...0.4.0
 [0.3.0]: https://github.com/bakame-php/cron-expression/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/bakame-php/cron-expression/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/bakame-php/cron-expression/releases/tag/0.1.0
