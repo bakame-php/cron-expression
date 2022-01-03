@@ -25,7 +25,7 @@ final class Scheduler implements CronScheduler
     public function __construct(
         CronExpression|string $expression,
         DateTimeZone|string $timezone,
-        private StartDate $startDatePresence
+        private StartDatePresence $startDatePresence
     ) {
         $this->expression = $this->filterExpression($expression);
         $this->timezone = $this->filterTimezone($timezone);
@@ -72,12 +72,12 @@ final class Scheduler implements CronScheduler
 
     public static function fromUTC(CronExpression|string $expression): self
     {
-        return new self($expression, new DateTimeZone('UTC'), StartDate::EXCLUDED);
+        return new self($expression, new DateTimeZone('UTC'), StartDatePresence::EXCLUDED);
     }
 
     public static function fromSystemTimezone(CronExpression|string $expression): self
     {
-        return new self($expression, new DateTimeZone(date_default_timezone_get()), StartDate::EXCLUDED);
+        return new self($expression, new DateTimeZone(date_default_timezone_get()), StartDatePresence::EXCLUDED);
     }
 
     public function expression(): CronExpression
@@ -92,7 +92,7 @@ final class Scheduler implements CronScheduler
 
     public function isStartDateExcluded(): bool
     {
-        return StartDate::EXCLUDED === $this->startDatePresence;
+        return StartDatePresence::EXCLUDED === $this->startDatePresence;
     }
 
     public function withExpression(CronExpression|string $expression): self
@@ -117,20 +117,20 @@ final class Scheduler implements CronScheduler
 
     public function includeStartDate(): self
     {
-        if (StartDate::INCLUDED === $this->startDatePresence) {
+        if (StartDatePresence::INCLUDED === $this->startDatePresence) {
             return $this;
         }
 
-        return new self($this->expression, $this->timezone, StartDate::INCLUDED);
+        return new self($this->expression, $this->timezone, StartDatePresence::INCLUDED);
     }
 
     public function excludeStartDate(): self
     {
-        if (StartDate::EXCLUDED === $this->startDatePresence) {
+        if (StartDatePresence::EXCLUDED === $this->startDatePresence) {
             return $this;
         }
 
-        return new self($this->expression, $this->timezone, StartDate::EXCLUDED);
+        return new self($this->expression, $this->timezone, StartDatePresence::EXCLUDED);
     }
 
     public function run(DateTimeInterface|string $startDate, int $nth = 0): DateTimeImmutable
@@ -152,7 +152,7 @@ final class Scheduler implements CronScheduler
         try {
             $when = $this->toDateTimeImmutable($when);
 
-            return $this->nextRun($when, StartDate::INCLUDED, false) === $when;
+            return $this->nextRun($when, StartDatePresence::INCLUDED, false) === $when;
         } catch (Throwable) {
             return false;
         }
@@ -160,43 +160,12 @@ final class Scheduler implements CronScheduler
 
     public function yieldRunsForward(DateTimeInterface|string $startDate, int $recurrences): Generator
     {
-        if (0 > $recurrences) {
-            throw SyntaxError::dueToNegativeRecurrences();
-        }
-        $i = 0;
-        $run = $this->toDateTimeImmutable($startDate);
-        $startDatePresence = $this->startDatePresence;
-        while ($i < $recurrences) {
-            yield $this->nextRun($run, $startDatePresence, false);
-
-            $run = ExpressionField::MINUTE->validator()->increment(
-                $this->nextRun($run, $startDatePresence, false),
-                $this->minuteFieldExpression
-            );
-            $startDatePresence = StartDate::INCLUDED;
-            ++$i;
-        }
+        return $this->yieldRuns($recurrences, $startDate, false);
     }
 
     public function yieldRunsBackward(DateTimeInterface|string $endDate, int $recurrences): Generator
     {
-        if (0 > $recurrences) {
-            throw SyntaxError::dueToNegativeRecurrences();
-        }
-
-        $i = 0;
-        $run = $this->toDateTimeImmutable($endDate);
-        $startDatePresence = $this->startDatePresence;
-        while ($i < $recurrences) {
-            yield $this->nextRun($run, $startDatePresence, true);
-
-            $run = ExpressionField::MINUTE->validator()->decrement(
-                $this->nextRun($run, $startDatePresence, true),
-                $this->minuteFieldExpression
-            );
-            $startDatePresence = StartDate::INCLUDED;
-            ++$i;
-        }
+        return $this->yieldRuns($recurrences, $endDate, true);
     }
 
     public function yieldRunsAfter(DateTimeInterface|string $startDate, DateInterval|string $interval): Generator
@@ -263,6 +232,31 @@ final class Scheduler implements CronScheduler
     /**
      * @throws CronError
      */
+    private function yieldRuns(int $recurrences, DateTimeInterface|string $startDate, bool $invert): Generator
+    {
+        if (0 > $recurrences) {
+            throw SyntaxError::dueToNegativeRecurrences();
+        }
+
+        $i = 0;
+        $run = $this->toDateTimeImmutable($startDate);
+        $startDatePresence = $this->startDatePresence;
+        while ($i < $recurrences) {
+            yield $this->nextRun($run, $startDatePresence, $invert);
+
+            $run = match ($invert) {
+                true => ExpressionField::MINUTE->validator()->decrement($this->nextRun($run, $startDatePresence, true), $this->minuteFieldExpression),
+                default => ExpressionField::MINUTE->validator()->increment($this->nextRun($run, $startDatePresence, false), $this->minuteFieldExpression),
+            };
+
+            $startDatePresence = StartDatePresence::INCLUDED;
+            ++$i;
+        }
+    }
+
+    /**
+     * @throws CronError
+     */
     private function runsAfter(DateTimeImmutable $startDate, DateTimeImmutable $endDate): Generator
     {
         if ($endDate < $startDate) {
@@ -280,7 +274,7 @@ final class Scheduler implements CronScheduler
             yield $run;
 
             $startDate = ExpressionField::MINUTE->validator()->increment($run, $this->minuteFieldExpression);
-            $startDatePresence = StartDate::INCLUDED;
+            $startDatePresence = StartDatePresence::INCLUDED;
         }
     }
 
@@ -305,19 +299,18 @@ final class Scheduler implements CronScheduler
             yield $run;
 
             $endDate = ExpressionField::MINUTE->validator()->decrement($run, $this->minuteFieldExpression);
-            $startDatePresence = StartDate::INCLUDED;
+            $startDatePresence = StartDatePresence::INCLUDED;
         }
     }
 
     /**
-     * Get the next or previous run date of the expression relative to a date.
+     * Get the next run date of the expression relative to a date.
      *
-     * @param DateTimeImmutable $date Relative calculation date
      * @param bool $invert Set to TRUE to go backwards
      *
      * @throws CronError on too many iterations
      */
-    private function nextRun(DateTimeImmutable $date, StartDate $startDatePresence, bool $invert): DateTimeImmutable
+    private function nextRun(DateTimeImmutable $date, StartDatePresence $startDatePresence, bool $invert): DateTimeImmutable
     {
         if ($this->includeDayOfWeekAndDayOfMonthExpression) {
             return $this->dayOfWeekAndDayOfMonthNextRun($date, $invert);
@@ -336,7 +329,7 @@ final class Scheduler implements CronScheduler
                 }
             }
 
-            if ($startDatePresence === StartDate::INCLUDED || $nextRun !== $date) {
+            if ($startDatePresence === StartDatePresence::INCLUDED || $nextRun !== $date) {
                 return $nextRun;
             }
 
@@ -348,6 +341,8 @@ final class Scheduler implements CronScheduler
     }
 
     /**
+     * Get the next run date of an expression containing a Day Of Week AND a Day of Month field relative to a date.
+     *
      * @throws CronError
      */
     private function dayOfWeekAndDayOfMonthNextRun(DateTimeImmutable $startDate, bool $invert): DateTimeImmutable

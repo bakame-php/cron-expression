@@ -236,7 +236,7 @@ To work as expected this class needs:
 
 - a CRON Expression ( as a string or as a `Expression` object)
 - a timezone as a PHP `DateTimeZone` instance or the timezone string name.
-- to know if the `startDate` if eligible should be present in the results via a `StartDate` enum with two values `StartDate::INCLUDED` and `StartDate::EXCLUDED`.
+- to know if the `startDate` if eligible should be present in the results via a `StartDatePresence` enum with two values `StartDatePresence::INCLUDED` and `StartDatePresence::EXCLUDED`.
 
 To ease instantiating the `Scheduler`, it comes bundle with two named constructors around timezone usage:  
 
@@ -250,14 +250,15 @@ To ease instantiating the `Scheduler`, it comes bundle with two named constructo
 
 use Bakame\Cron\Expression;
 use Bakame\Cron\Scheduler;
-use Bakame\Cron\StartDate;
+use Bakame\Cron\StartDatePresence;
+
 require_once '/vendor/autoload.php';
 
 // You can define all properties on instantiation
 $scheduler = new Scheduler(
     new Expression('0 7 * * *'), 
     new DateTimeZone('UTC'),
-    StartDate::INCLUDED
+    StartDatePresence::INCLUDED
  );
 
 // Or we can use a named constructor and the scheduler configuration methods
@@ -277,10 +278,11 @@ Once instantiated you can use the `Scheduler` to find the run date according to 
 
 use Bakame\Cron\Expression;
 use Bakame\Cron\Scheduler;
+use Bakame\Cron\StartDatePresence;
 
 require_once '/vendor/autoload.php';
 
-$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali');
+$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali', StartDatePresence::EXCLUDED);
 echo $scheduler->run('now')->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2021-12-29 00:00:00, Africa/Kigali
 ```
@@ -288,7 +290,7 @@ echo $scheduler->run('now')->format('Y-m-d H:i:s, e'), PHP_EOL;
 You can specify the number of matches to skip before calculating the next run.
 
 ```php
-$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali');
+$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali', StartDatePresence::EXCLUDED);
 echo $scheduler->run('now', 3)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2022-01-01 00:00:00, Africa/Kigali
 ```
@@ -296,7 +298,7 @@ echo $scheduler->run('now', 3)->format('Y-m-d H:i:s, e'), PHP_EOL;
 You can specify the starting date for calculating the next run.
 
 ```php
-$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali');
+$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali', StartDatePresence::EXCLUDED);
 echo $scheduler->run('2022-01-01 00:00:00')->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2022-01-02 00:00:00, Africa/Kigali
 ```
@@ -304,7 +306,7 @@ echo $scheduler->run('2022-01-01 00:00:00')->format('Y-m-d H:i:s, e'), PHP_EOL;
 If you want to get a date in the past just use a negative number.
 
 ```php
-$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali');
+$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali', StartDatePresence::EXCLUDED);
 echo $scheduler->run('2022-01-01 00:00:00', -2)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2021-12-31 00:00:00, Africa/Kigali
 ```
@@ -317,7 +319,7 @@ returned instead of modifying the current object.
 ```php
 $dateTime = new DateTime('2022-01-01 00:04:00', new DateTimeZone('Africa/Kigali'));
 $dateTimeImmutable = DateTimeImmutable::createFromInterface($dateTime);
-$scheduler = new Scheduler('4-59/2 * * * *', 'Africa/Kigali');
+$scheduler = new Scheduler('4-59/2 * * * *', 'Africa/Kigali', StartDatePresence::EXCLUDED);
 echo $scheduler->run($dateTime)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2022-01-01 00:06:00, Africa/Kigali
 echo $scheduler->includeStartDate()->run($dateTime)->format('Y-m-d H:i:s, e'), PHP_EOL;

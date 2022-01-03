@@ -2,7 +2,7 @@
 
 namespace Bakame\Cron;
 
-enum StartDate
+enum StartDatePresence
 {
     case EXCLUDED;
     case INCLUDED;
