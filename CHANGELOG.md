@@ -27,6 +27,7 @@ All Notable changes to `cron` will be documented in this file
 ### Removed
 
 - **[BC Break]** `Scheduler::maxIterationCount` is no longer needed with the new implementation.
+- **[BC Break]** `UnableToProcessRun` exception class is no longer needed with the new implementation.
 
 ## [0.3.0] - 2021-12-31
 

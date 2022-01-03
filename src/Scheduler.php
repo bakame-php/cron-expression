@@ -164,19 +164,15 @@ final class Scheduler implements CronScheduler
             throw SyntaxError::dueToNegativeRecurrences();
         }
         $i = 0;
-        $startDate = $this->toDateTimeImmutable($startDate);
+        $run = $this->toDateTimeImmutable($startDate);
         $startDatePresence = $this->startDatePresence;
         while ($i < $recurrences) {
-            try {
-                $run = $this->nextRun($startDate, $startDatePresence, false);
-                // @codeCoverageIgnoreStart
-            } catch (UnableToProcessRun) {
-                break;
-            }
-            // @codeCoverageIgnoreEnd
-            yield $run;
+            yield $this->nextRun($run, $startDatePresence, false);
 
-            $startDate = ExpressionField::MINUTE->validator()->increment($run, $this->minuteFieldExpression);
+            $run = ExpressionField::MINUTE->validator()->increment(
+                $this->nextRun($run, $startDatePresence, false),
+                $this->minuteFieldExpression
+            );
             $startDatePresence = StartDate::INCLUDED;
             ++$i;
         }
@@ -189,19 +185,15 @@ final class Scheduler implements CronScheduler
         }
 
         $i = 0;
-        $endDate = $this->toDateTimeImmutable($endDate);
+        $run = $this->toDateTimeImmutable($endDate);
         $startDatePresence = $this->startDatePresence;
         while ($i < $recurrences) {
-            try {
-                $run = $this->nextRun($endDate, $startDatePresence, true);
-                // @codeCoverageIgnoreStart
-            } catch (UnableToProcessRun) {
-                break;
-            }
-            // @codeCoverageIgnoreEnd
-            yield $run;
+            yield $this->nextRun($run, $startDatePresence, true);
 
-            $endDate = ExpressionField::MINUTE->validator()->decrement($run, $this->minuteFieldExpression);
+            $run = ExpressionField::MINUTE->validator()->decrement(
+                $this->nextRun($run, $startDatePresence, true),
+                $this->minuteFieldExpression
+            );
             $startDatePresence = StartDate::INCLUDED;
             ++$i;
         }
@@ -280,14 +272,7 @@ final class Scheduler implements CronScheduler
         $startDatePresence = $this->startDatePresence;
         $run = $startDate;
         while ($endDate > $run) {
-            try {
-                $run = $this->nextRun($startDate, $startDatePresence, false);
-                // @codeCoverageIgnoreStart
-            } catch (UnableToProcessRun) {
-                break;
-            }
-            // @codeCoverageIgnoreEnd
-
+            $run = $this->nextRun($startDate, $startDatePresence, false);
             if ($endDate < $run) {
                 break;
             }
@@ -311,13 +296,7 @@ final class Scheduler implements CronScheduler
         $startDatePresence = $this->startDatePresence;
         $run = $endDate;
         while ($startDate < $run) {
-            try {
-                $run = $this->nextRun($endDate, $startDatePresence, true);
-                // @codeCoverageIgnoreStart
-            } catch (UnableToProcessRun) {
-                break;
-            }
-            // @codeCoverageIgnoreEnd
+            $run = $this->nextRun($endDate, $startDatePresence, true);
 
             if ($startDate > $run) {
                 break;
