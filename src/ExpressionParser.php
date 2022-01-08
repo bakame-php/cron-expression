@@ -6,6 +6,18 @@ use Throwable;
 
 final class ExpressionParser
 {
+    private const DEFAULT_EXPRESSIONS = [
+        '@yearly' => '0 0 1 1 *',
+        '@annually' => '0 0 1 1 *',
+        '@monthly' => '0 0 1 * *',
+        '@weekly' => '0 0 * * 0',
+        '@daily' => '0 0 * * *',
+        '@midnight' => '0 0 * * *',
+        '@hourly' => '0 * * * *',
+    ];
+
+    private static array $registeredExpressions = self::DEFAULT_EXPRESSIONS;
+
     /**
      * Parse a CRON expression string into its components.
      *
@@ -41,17 +53,7 @@ final class ExpressionParser
      */
     public static function parse(string $expression): array
     {
-        static $specialExpressions = [
-            '@yearly' => '0 0 1 1 *',
-            '@annually' => '0 0 1 1 *',
-            '@monthly' => '0 0 1 * *',
-            '@weekly' => '0 0 * * 0',
-            '@daily' => '0 0 * * *',
-            '@midnight' => '0 0 * * *',
-            '@hourly' => '0 * * * *',
-        ];
-
-        $expression = $specialExpressions[strtolower($expression)] ?? $expression;
+        $expression = self::$registeredExpressions[strtolower($expression)] ?? $expression;
         /** @var array<int, string> $fields */
         $fields = preg_split('/\s/', $expression, -1, PREG_SPLIT_NO_EMPTY);
         if (count($fields) !== 5) {
@@ -122,5 +124,49 @@ final class ExpressionParser
         }
 
         return true;
+    }
+
+    /**
+     * @throws RegistrationError
+     */
+    public static function registerExpression(string $alias, string $expression): void
+    {
+        try {
+            self::parse($expression);
+        } catch (SyntaxError $exception) {
+            throw new RegistrationError("The expression `$expression` is invalid", 0, $exception);
+        }
+
+        $alias = strtolower($alias);
+
+        match (true) {
+            1 !== preg_match('/^@([a-z0-9])+$/', $alias) => throw new RegistrationError("The alias `$alias` is invalid. It must start with an `@` character and contain letters and numbers only."),
+            isset(self::$registeredExpressions[$alias]) => throw new RegistrationError("The alias `$alias` is already registered."),
+            default => self::$registeredExpressions[$alias] = $expression,
+        };
+    }
+
+    public static function isRegisteredExpression(string $name): bool
+    {
+        return isset(self::$registeredExpressions[$name]);
+    }
+
+    public static function unregisterExpression(string $name): void
+    {
+        if (isset(self::DEFAULT_EXPRESSIONS[$name])) {
+            throw new RegistrationError("The alias `$name` can not be unregistered.");
+        }
+
+        unset(self::$registeredExpressions[$name]);
+    }
+
+    /**
+     * Returns all registered expressions except the default ones.
+     *
+     * @return array<string, string>
+     */
+    public static function registeredExpressions(): array
+    {
+        return self::$registeredExpressions;
     }
 }

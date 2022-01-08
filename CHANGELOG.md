@@ -6,7 +6,7 @@ All Notable changes to `cron` will be documented in this file
 
 ### Added
 
-- None
+- Registration mechanism added to `ExpressionParser` to allow the package to registered expressions aliases. see [#64](https://github.com/dragonmantank/cron-expression/pull/64/)
 
 ### Fixed
 

@@ -32,7 +32,7 @@ final class SyntaxError extends InvalidArgumentException implements CronError
 
     public static function dueToInvalidExpression(string $expression): self
     {
-        return new self('`'.$expression.'` is not a valid or a supported CRON expression');
+        return new self("`$expression` is not a valid or a supported CRON expression.");
     }
 
     /**
@@ -52,7 +52,7 @@ final class SyntaxError extends InvalidArgumentException implements CronError
             $date = $date->format('c');
         }
 
-        return new self('The string `'.$date.'` is not a valid `DateTimeImmutable:::__construct` input.', [], $exception);
+        return new self("The string `$date` is not a valid `DateTimeImmutable:::__construct` input.", [], $exception);
     }
 
     public static function dueToInvalidDateIntervalString(string $interval): self

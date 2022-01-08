@@ -67,4 +67,52 @@ final class ExpressionParserTest extends TestCase
             'invalid weekday' => ['* 14 * * mon-fri0345345'],
         ];
     }
+
+    public function testItCanRegisterAnValidExpression(): void
+    {
+        ExpressionParser::registerExpression('@every', '* * * * *');
+
+        self::assertCount(8, ExpressionParser::registeredExpressions());
+        self::assertArrayHasKey('@every', ExpressionParser::registeredExpressions());
+        self::assertTrue(ExpressionParser::isRegisteredExpression('@every'));
+        self::assertEquals(ExpressionParser::parse('@every'), ExpressionParser::parse('* * * * *'));
+
+        ExpressionParser::unregisterExpression('@every');
+
+        self::assertCount(7, ExpressionParser::registeredExpressions());
+        self::assertArrayNotHasKey('@every', ExpressionParser::registeredExpressions());
+        self::assertFalse(ExpressionParser::isRegisteredExpression('@every'));
+
+        $this->expectException(SyntaxError::class);
+        ExpressionParser::parse('@every');
+    }
+
+    public function testItWillFailToRegisterAnInvalidExpression(): void
+    {
+        $this->expectException(RegistrationError::class);
+
+        ExpressionParser::registerExpression('@every', 'foobar');
+    }
+
+    public function testItWillFailToRegisterAnInvalidName(): void
+    {
+        $this->expectException(RegistrationError::class);
+
+        ExpressionParser::registerExpression('every', '* * * * *');
+    }
+
+    public function testItWillFailToRegisterAValidNameTwice(): void
+    {
+        ExpressionParser::registerExpression('@every', '* * * * *');
+
+        $this->expectException(RegistrationError::class);
+        ExpressionParser::registerExpression('@every', '2 2 2 2 2');
+    }
+
+    public function testItWillFailToUnregisterADefaultExpression(): void
+    {
+        $this->expectException(RegistrationError::class);
+
+        ExpressionParser::unregisterExpression('@daily');
+    }
 }

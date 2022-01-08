@@ -246,30 +246,6 @@ echo $cron->dayOfWeek();  //displays '5'
 **If a field is not provided it will be replaced by the `*` character.**
 **If unknown field are provided a `SyntaxError` exception will be thrown.**
 
-#### Special expressions
-
-The `Expression` class is able to handle special CRON expression:
-
-| Special expression | meaning              | Expression constructor | Expression shortcut     |
-|--------------------|----------------------|------------------------|-------------------------|
-| `@reboot`          | Run once, at startup | **Not supported**      | **Not supported**       |
-| `@yearly`          | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
-| `@annually`        | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
-| `@monthly`         | Run once a month     | `0 0 1 * *`            | `Expression::monthly()` |
-| `@weekly`          | Run once a week      | `0 0 * * 0`            | `Expression::weekly()`  |
-| `@daily`           | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
-| `@midnight`        | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
-| `@hourly`          | Run once a hour      | `0 * * * *`            | `Expression::hourly()`  |
-
-```php
-<?php
-
-use Bakame\Cron\Expression;
-
-echo Expression::daily()->toString();         // displays "0 0 * * *"
-echo (new Expression('@DAILY'))->toString();  // displays "0 0 * * *"
-```
-
 #### Updating the object
 
 Apart from exposing getter methods you can also easily update the CRON expression via its `with*` methods where the `*`
@@ -403,7 +379,87 @@ $hourValidator->isSatisfiedBy('*/3', new DateTime('2014-04-07 00:00:00')); // re
 
 **NOTICE: Field validator do not take into account the `DateTimeInterface` object timezone**
 
-**HAPPY CODING!**
+### Registering CRON Expression
+
+The `ExpressionParser` class is able to handle special CRON expression. 
+You have them also exposed as named constructors on the `Expression` class
+
+| Special expression | meaning              | Expression constructor | Expression shortcut     |
+|--------------------|----------------------|------------------------|-------------------------|
+| `@reboot`          | Run once, at startup | **Not supported**      | **Not supported**       |
+| `@yearly`          | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
+| `@annually`        | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
+| `@monthly`         | Run once a month     | `0 0 1 * *`            | `Expression::monthly()` |
+| `@weekly`          | Run once a week      | `0 0 * * 0`            | `Expression::weekly()`  |
+| `@daily`           | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
+| `@midnight`        | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
+| `@hourly`          | Run once a hour      | `0 * * * *`            | `Expression::hourly()`  |
+
+```php
+<?php
+
+use Bakame\Cron\Expression;
+use Bakame\Cron\ExpressionParser;
+
+echo Expression::daily()->toString();         // displays "0 0 * * *"
+echo (new Expression('@DAILY'))->toString();  // displays "0 0 * * *"
+
+ExpressionParser::parse('@dAiLY');
+// returns the following array
+// array(
+//   'minute' => '0',
+//   'hour' => '0',
+//   'dayOfMonth' => '*',
+//   'month' => '*',
+//   'dayOfWeek' => '*',
+// )
+```
+
+It is possible to register more expressions via an alias name. Once registered it will be available when using the `Expression` object
+but also when using the `Scheduler` class.
+
+```php
+<?php
+
+use Bakame\Cron\ExpressionParser;
+use Bakame\Cron\Scheduler;
+
+ExpressionParser::registerExpression('@every', '* * * * *');
+Scheduler::fromUTC('@every')->run('TODAY', 2)->format('c');
+// display 2022-01-08T00:03:00+00:00
+````
+
+At any given time it is possible to:
+
+- list all registered expressions and their associated alias 
+- remove the already registered alias except for the default ones listed in the table above.
+
+```php
+<?php
+
+use Bakame\Cron\ExpressionParser;
+use Bakame\Cron\Scheduler;
+
+ExpressionParser::registerExpression('@every', '* * * * *');
+ExpressionParser::registeredExpressions();
+// returns
+// array (
+//   '@yearly' => '0 0 1 1 *',
+//   '@annually' => '0 0 1 1 *',
+//   '@monthly' => '0 0 1 * *',
+//   '@weekly' => '0 0 * * 0',
+//   '@daily' => '0 0 * * *',
+//   '@midnight' => '0 0 * * *',
+//   '@hourly' => '0 * * * *',
+//   '@every' => '* * * * *',
+// )
+ExpressionParser::isRegisteredExpression('@foobar'); //return false
+ExpressionParser::isRegisteredExpression('@daily'); //return true
+ExpressionParser::isRegisteredExpression('@every'); //return true
+ExpressionParser::unregisterExpression('@every');
+ExpressionParser::unregisterExpression('@daily'); //throws RegistrationError exception
+````
+
 
 ## Testing
 
