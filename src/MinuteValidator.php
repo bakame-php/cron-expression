@@ -32,12 +32,10 @@ final class MinuteValidator extends FieldValidator
         $currentMinute = (int) $date->format('i');
         $minute = $this->computeTimeFieldRangeValue($currentMinute, $fieldExpression, false);
         if ($currentMinute < $minute) {
-            return $date->setTime((int) $date->format('H'), $minute);
+            return $date->add(new DateInterval('PT'.($minute - $currentMinute).'M'));
         }
 
-        $date = $date->add(new DateInterval('PT1H'));
-
-        return $date->setTime((int) $date->format('H'), 0);
+        return $date->add(new DateInterval('PT'.(60 - $currentMinute).'M'));
     }
 
     public function decrement(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
@@ -50,7 +48,7 @@ final class MinuteValidator extends FieldValidator
         $currentMinute = (int) $date->format('i');
         $minute = $this->computeTimeFieldRangeValue($currentMinute, $fieldExpression, true);
         if ($minute < $currentMinute) {
-            return $date->setTime((int) $date->format('H'), $minute);
+            return $date->sub(new DateInterval('PT'.($currentMinute - $minute).'M'));
         }
 
         return $date->sub(new DateInterval('PT'.($currentMinute + 1).'M'));
