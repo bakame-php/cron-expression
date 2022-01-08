@@ -247,11 +247,12 @@ final class Scheduler implements CronScheduler
         while ($i < $recurrences) {
             yield $this->nextRun($run, $startDatePresence, $direction);
 
-            $run = match ($direction) {
-                self::BACKWARD => ExpressionField::MINUTE->validator()->decrement($this->nextRun($run, $startDatePresence, self::BACKWARD), $this->minuteFieldExpression),
-                default => ExpressionField::MINUTE->validator()->increment($this->nextRun($run, $startDatePresence, self::FORWARD), $this->minuteFieldExpression),
+            $modifier = match ($direction) {
+                self::BACKWARD => ExpressionField::MINUTE->validator()->decrement(...),
+                default => ExpressionField::MINUTE->validator()->increment(...),
             };
 
+            $run = $modifier($this->nextRun($run, $startDatePresence, $direction), $this->minuteFieldExpression);
             $startDatePresence = StartDatePresence::INCLUDED;
             ++$i;
         }
@@ -331,12 +332,10 @@ final class Scheduler implements CronScheduler
             if ($startDatePresence === StartDatePresence::INCLUDED || $nextRun !== $date) {
                 return $nextRun;
             }
-
-            $nextRun = match ($direction) {
-                self::BACKWARD => ExpressionField::MINUTE->validator()->decrement($nextRun, $this->minuteFieldExpression),
-                default => ExpressionField::MINUTE->validator()->increment($nextRun, $this->minuteFieldExpression),
-            };
-        } while (1);
+        } while ($nextRun = match ($direction) {
+            self::BACKWARD => ExpressionField::MINUTE->validator()->decrement($nextRun, $this->minuteFieldExpression),
+            default => ExpressionField::MINUTE->validator()->increment($nextRun, $this->minuteFieldExpression),
+        });
     }
 
     /**
