@@ -244,13 +244,12 @@ final class Scheduler implements CronScheduler
         $i = 0;
         $run = $this->toDateTimeImmutable($startDate);
         $startDatePresence = $this->startDatePresence;
+        $modifier = match ($direction) {
+            self::BACKWARD => ExpressionField::MINUTE->validator()->decrement(...),
+            default => ExpressionField::MINUTE->validator()->increment(...),
+        };
         while ($i < $recurrences) {
             yield $this->nextRun($run, $startDatePresence, $direction);
-
-            $modifier = match ($direction) {
-                self::BACKWARD => ExpressionField::MINUTE->validator()->decrement(...),
-                default => ExpressionField::MINUTE->validator()->increment(...),
-            };
 
             $run = $modifier($this->nextRun($run, $startDatePresence, $direction), $this->minuteFieldExpression);
             $startDatePresence = StartDatePresence::INCLUDED;
@@ -295,7 +294,6 @@ final class Scheduler implements CronScheduler
         $run = $endDate;
         while ($startDate < $run) {
             $run = $this->nextRun($endDate, $startDatePresence, self::BACKWARD);
-
             if ($startDate > $run) {
                 break;
             }
@@ -316,6 +314,11 @@ final class Scheduler implements CronScheduler
             return $this->dayOfWeekAndDayOfMonthNextRun($date, $direction);
         }
 
+        $modifier = match ($direction) {
+            self::BACKWARD => ExpressionField::MINUTE->validator()->decrement(...),
+            default => ExpressionField::MINUTE->validator()->increment(...),
+        };
+
         $nextRun = $date;
         do {
             start:
@@ -332,10 +335,7 @@ final class Scheduler implements CronScheduler
             if ($startDatePresence === StartDatePresence::INCLUDED || $nextRun !== $date) {
                 return $nextRun;
             }
-        } while ($nextRun = match ($direction) {
-            self::BACKWARD => ExpressionField::MINUTE->validator()->decrement($nextRun, $this->minuteFieldExpression),
-            default => ExpressionField::MINUTE->validator()->increment($nextRun, $this->minuteFieldExpression),
-        });
+        } while ($nextRun = $modifier($nextRun, $this->minuteFieldExpression));
     }
 
     /**
