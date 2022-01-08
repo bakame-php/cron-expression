@@ -70,18 +70,18 @@ final class ExpressionParserTest extends TestCase
 
     public function testItCanRegisterAnValidExpression(): void
     {
-        ExpressionParser::registerExpression('@every', '* * * * *');
+        ExpressionParser::registerAlias('@every', '* * * * *');
 
-        self::assertCount(8, ExpressionParser::registeredExpressions());
-        self::assertArrayHasKey('@every', ExpressionParser::registeredExpressions());
-        self::assertTrue(ExpressionParser::isRegisteredExpression('@every'));
+        self::assertCount(8, ExpressionParser::registeredAliases());
+        self::assertArrayHasKey('@every', ExpressionParser::registeredAliases());
+        self::assertTrue(ExpressionParser::isRegisteredAlias('@every'));
         self::assertEquals(ExpressionParser::parse('@every'), ExpressionParser::parse('* * * * *'));
 
-        ExpressionParser::unregisterExpression('@every');
+        ExpressionParser::unregisterAlias('@every');
 
-        self::assertCount(7, ExpressionParser::registeredExpressions());
-        self::assertArrayNotHasKey('@every', ExpressionParser::registeredExpressions());
-        self::assertFalse(ExpressionParser::isRegisteredExpression('@every'));
+        self::assertCount(7, ExpressionParser::registeredAliases());
+        self::assertArrayNotHasKey('@every', ExpressionParser::registeredAliases());
+        self::assertFalse(ExpressionParser::isRegisteredAlias('@every'));
 
         $this->expectException(SyntaxError::class);
         ExpressionParser::parse('@every');
@@ -89,30 +89,30 @@ final class ExpressionParserTest extends TestCase
 
     public function testItWillFailToRegisterAnInvalidExpression(): void
     {
-        $this->expectException(RegistrationError::class);
+        $this->expectException(AliasError::class);
 
-        ExpressionParser::registerExpression('@every', 'foobar');
+        ExpressionParser::registerAlias('@every', 'foobar');
     }
 
     public function testItWillFailToRegisterAnInvalidName(): void
     {
-        $this->expectException(RegistrationError::class);
+        $this->expectException(AliasError::class);
 
-        ExpressionParser::registerExpression('every', '* * * * *');
+        ExpressionParser::registerAlias('every', '* * * * *');
     }
 
     public function testItWillFailToRegisterAValidNameTwice(): void
     {
-        ExpressionParser::registerExpression('@every', '* * * * *');
+        ExpressionParser::registerAlias('@every', '* * * * *');
 
-        $this->expectException(RegistrationError::class);
-        ExpressionParser::registerExpression('@every', '2 2 2 2 2');
+        $this->expectException(AliasError::class);
+        ExpressionParser::registerAlias('@every', '2 2 2 2 2');
     }
 
     public function testItWillFailToUnregisterADefaultExpression(): void
     {
-        $this->expectException(RegistrationError::class);
+        $this->expectException(AliasError::class);
 
-        ExpressionParser::unregisterExpression('@daily');
+        ExpressionParser::unregisterAlias('@daily');
     }
 }

@@ -6,7 +6,7 @@ use Throwable;
 
 final class ExpressionParser
 {
-    private const DEFAULT_EXPRESSIONS = [
+    private const DEFAULT_ALIASES = [
         '@yearly' => '0 0 1 1 *',
         '@annually' => '0 0 1 1 *',
         '@monthly' => '0 0 1 * *',
@@ -16,7 +16,7 @@ final class ExpressionParser
         '@hourly' => '0 * * * *',
     ];
 
-    private static array $registeredExpressions = self::DEFAULT_EXPRESSIONS;
+    private static array $registeredAliases = self::DEFAULT_ALIASES;
 
     /**
      * Parse a CRON expression string into its components.
@@ -53,7 +53,7 @@ final class ExpressionParser
      */
     public static function parse(string $expression): array
     {
-        $expression = self::$registeredExpressions[strtolower($expression)] ?? $expression;
+        $expression = self::$registeredAliases[strtolower($expression)] ?? $expression;
         /** @var array<int, string> $fields */
         $fields = preg_split('/\s/', $expression, -1, PREG_SPLIT_NO_EMPTY);
         if (count($fields) !== 5) {
@@ -127,37 +127,37 @@ final class ExpressionParser
     }
 
     /**
-     * @throws RegistrationError
+     * @throws AliasError
      */
-    public static function registerExpression(string $alias, string $expression): void
+    public static function registerAlias(string $alias, string $expression): void
     {
         try {
             self::parse($expression);
         } catch (SyntaxError $exception) {
-            throw new RegistrationError("The expression `$expression` is invalid", 0, $exception);
+            throw new AliasError("The expression `$expression` is invalid", 0, $exception);
         }
 
         $alias = strtolower($alias);
 
         match (true) {
-            1 !== preg_match('/^@([a-z0-9])+$/', $alias) => throw new RegistrationError("The alias `$alias` is invalid. It must start with an `@` character and contain letters and numbers only."),
-            isset(self::$registeredExpressions[$alias]) => throw new RegistrationError("The alias `$alias` is already registered."),
-            default => self::$registeredExpressions[$alias] = $expression,
+            1 !== preg_match('/^@([a-z0-9])+$/', $alias) => throw new AliasError("The alias `$alias` is invalid. It must start with an `@` character and contain letters and numbers only."),
+            isset(self::$registeredAliases[$alias]) => throw new AliasError("The alias `$alias` is already registered."),
+            default => self::$registeredAliases[$alias] = $expression,
         };
     }
 
-    public static function isRegisteredExpression(string $name): bool
+    public static function isRegisteredAlias(string $name): bool
     {
-        return isset(self::$registeredExpressions[$name]);
+        return isset(self::$registeredAliases[$name]);
     }
 
-    public static function unregisterExpression(string $name): void
+    public static function unregisterAlias(string $name): void
     {
-        if (isset(self::DEFAULT_EXPRESSIONS[$name])) {
-            throw new RegistrationError("The alias `$name` can not be unregistered.");
+        if (isset(self::DEFAULT_ALIASES[$name])) {
+            throw new AliasError("The alias `$name` can not be unregistered.");
         }
 
-        unset(self::$registeredExpressions[$name]);
+        unset(self::$registeredAliases[$name]);
     }
 
     /**
@@ -165,8 +165,8 @@ final class ExpressionParser
      *
      * @return array<string, string>
      */
-    public static function registeredExpressions(): array
+    public static function registeredAliases(): array
     {
-        return self::$registeredExpressions;
+        return self::$registeredAliases;
     }
 }

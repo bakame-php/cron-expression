@@ -379,9 +379,9 @@ $hourValidator->isSatisfiedBy('*/3', new DateTime('2014-04-07 00:00:00')); // re
 
 **NOTICE: Field validator do not take into account the `DateTimeInterface` object timezone**
 
-### Registering CRON Expression
+### Registering CRON Expression Aliases
 
-The `ExpressionParser` class is able to handle special CRON expression. 
+The `ExpressionParser` class is able to handle the all default aliases for CRON expression except one. 
 You have them also exposed as named constructors on the `Expression` class
 
 | Special expression | meaning              | Expression constructor | Expression shortcut     |
@@ -416,7 +416,9 @@ ExpressionParser::parse('@dAiLY');
 ```
 
 It is possible to register more expressions via an alias name. Once registered it will be available when using the `Expression` object
-but also when using the `Scheduler` class.
+but also when using the `Scheduler` class. 
+An alias name needs to be a single word containing only ASCII letters and number and prefixed with the `@` character. They should be
+associated with any valid expression.
 
 ```php
 <?php
@@ -424,15 +426,15 @@ but also when using the `Scheduler` class.
 use Bakame\Cron\ExpressionParser;
 use Bakame\Cron\Scheduler;
 
-ExpressionParser::registerExpression('@every', '* * * * *');
+ExpressionParser::registerAlias('@every', '* * * * *');
 Scheduler::fromUTC('@every')->run('TODAY', 2)->format('c');
 // display 2022-01-08T00:03:00+00:00
 ````
 
 At any given time it is possible to:
 
-- list all registered expressions and their associated alias 
-- remove the already registered alias except for the default ones listed in the table above.
+- list all registered expressions and their associated aliases
+- remove the already registered aliases except for the default ones listed in the table above.
 
 ```php
 <?php
@@ -440,8 +442,11 @@ At any given time it is possible to:
 use Bakame\Cron\ExpressionParser;
 use Bakame\Cron\Scheduler;
 
-ExpressionParser::registerExpression('@every', '* * * * *');
-ExpressionParser::registeredExpressions();
+if (!ExpressionParser::isRegisteredAlias('@every')) {
+    ExpressionParser::registerAlias('@every', '* * * * *');
+}
+
+ExpressionParser::registeredAliases();
 // returns
 // array (
 //   '@yearly' => '0 0 1 1 *',
@@ -453,13 +458,15 @@ ExpressionParser::registeredExpressions();
 //   '@hourly' => '0 * * * *',
 //   '@every' => '* * * * *',
 // )
-ExpressionParser::isRegisteredExpression('@foobar'); //return false
-ExpressionParser::isRegisteredExpression('@daily'); //return true
-ExpressionParser::isRegisteredExpression('@every'); //return true
-ExpressionParser::unregisterExpression('@every');
-ExpressionParser::unregisterExpression('@daily'); //throws RegistrationError exception
-````
+ExpressionParser::isRegisteredAlias('@foobar'); //return false
+ExpressionParser::isRegisteredAlias('@daily');  //return true
+ExpressionParser::isRegisteredAlias('@every');  //return true
 
+ExpressionParser::unregisterAlias('@every');
+
+ExpressionParser::isRegisteredAlias('@every'); //return false
+ExpressionParser::unregisterAlias('@daily');   //throws RegistrationError exception
+````
 
 ## Testing
 
