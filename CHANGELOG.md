@@ -6,12 +6,14 @@ All Notable changes to `cron` will be documented in this file
 
 ### Added
 
-- Registration mechanism added to `ExpressionParser` to allow the package to registered expressions aliases. see [#64](https://github.com/dragonmantank/cron-expression/pull/64/)
+- Registration mechanism added to `Expression` to allow the package to registered expressions aliases. see [#64](https://github.com/dragonmantank/cron-expression/pull/64/)
 
 ### Fixed
 
 - Fix wrapping aroung ranges see [#88](https://github.com/dragonmantank/cron-expression/issue/88/)
 - Improve parser range validation the lower bound should always be lower or equal to the upper bound.
+- **[BC Break]** Internal rewrite CRON Fields are now value objects.
+- **[BC Break]** `Expression` field related methods no longer returns string but `CronField` object.
 
 ### Deprecate
 
@@ -20,6 +22,8 @@ All Notable changes to `cron` will be documented in this file
 ### Removed
 
 - `RangeError` exception is removed as it is no longer needed.
+- **[BC Break]** `ExpressionParser` its capabilities are now bundle inside the `Expression` class.
+- **[BC Break]** `CronFieldValidator` capabilities are removed and replaced by `CronField` value objects.
 
 ## [0.4.0] - 2022-01-03
 
