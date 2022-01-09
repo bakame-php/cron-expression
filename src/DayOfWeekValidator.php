@@ -99,13 +99,8 @@ final class DayOfWeekValidator extends FieldValidator
         // Handle day of the week values
         if (str_contains($fieldExpression, '-')) {
             [$first, $last] = explode('-', $fieldExpression);
-            if ($first === '7') {
-                $first = '0';
-            }
+            [$first, $last] = $this->formatFieldRanges($first, $last);
 
-            if ($last === '0') {
-                $last = '7';
-            }
             $fieldExpression = $first.'-'.$last;
         }
 
@@ -113,6 +108,22 @@ final class DayOfWeekValidator extends FieldValidator
         $format = in_array('7', str_split($fieldExpression), true) ? 'N' : 'w';
 
         return $this->isSatisfied((int) $date->format($format), $fieldExpression);
+    }
+
+    /**
+     * @return array<string>
+     */
+    protected function formatFieldRanges(string $first, string $last): array
+    {
+        if ($first === '7') {
+            $first = '0';
+        }
+
+        if ($last === '0') {
+            $last = '7';
+        }
+
+        return [$first, $last];
     }
 
     public function increment(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable

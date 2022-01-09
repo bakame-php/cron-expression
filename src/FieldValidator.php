@@ -62,15 +62,32 @@ abstract class FieldValidator implements CronFieldValidator
             }
 
             [$first, $last] = array_map([$this, 'convertLiterals'], explode('-', $fieldExpression));
+            [$first, $last] = $this->formatFieldRanges($first, $last);
             if (in_array('*', [$first, $last], true)) {
                 return false;
             }
 
-            return $this->isValid($first) && $this->isValid($last);
+            if (!$this->isValid($first) || !$this->isValid($last)) {
+                return false;
+            }
+
+            if (ctype_digit($first) && ctype_digit($last) && ((int) $last < (int) $first)) {
+                return false;
+            }
+
+            return true;
         }
 
         return 1 === preg_match('/^\d+$/', $fieldExpression)
             && in_array((int) $fieldExpression, $this->fullRanges(), true);
+    }
+
+    /**
+     * @return array<string>
+     */
+    protected function formatFieldRanges(string $first, string $last): array
+    {
+        return [$first, $last];
     }
 
     /**
@@ -124,14 +141,6 @@ abstract class FieldValidator implements CronFieldValidator
         [$rangeStart, $rangeEnd] = explode('-', $range, 2) + [1 => null];
         $rangeStart = (int) $rangeStart;
         $rangeEnd = (int) ($rangeEnd ?? $rangeStart);
-
-        if ($rangeStart < static::RANGE_START || $rangeStart > static::RANGE_END || $rangeStart > $rangeEnd) {
-            throw RangeError::dueToInvalidInput('start');
-        }
-
-        if ($rangeEnd < static::RANGE_START || $rangeEnd > static::RANGE_END) {
-            throw RangeError::dueToInvalidInput('end');
-        }
 
         return in_array($dateValue, $this->activeRanges($rangeStart, $rangeEnd, $step), true);
     }

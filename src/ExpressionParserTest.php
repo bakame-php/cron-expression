@@ -65,6 +65,8 @@ final class ExpressionParserTest extends TestCase
             'invalid minute field' => ['90 * * * *'],
             'invalid hour field value' => ['0 24 1 12 0'],
             'invalid weekday' => ['* 14 * * mon-fri0345345'],
+            'invalid range in hour' => ['* 59-41 * * *'],
+            'invalid range in weekday' => ['* * * * 8-3'],
         ];
     }
 

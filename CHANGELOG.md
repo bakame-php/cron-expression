@@ -11,6 +11,7 @@ All Notable changes to `cron` will be documented in this file
 ### Fixed
 
 - Fix wrapping aroung ranges see [#88](https://github.com/dragonmantank/cron-expression/issue/88/)
+- Improve parser range validation the lower bound should always be lower or equal to the upper bound.
 
 ### Deprecate
 
@@ -18,7 +19,7 @@ All Notable changes to `cron` will be documented in this file
 
 ### Removed
 
-- None
+- `RangeError` exception is removed as it is no longer needed.
 
 ## [0.4.0] - 2022-01-03
 
