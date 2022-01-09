@@ -22,6 +22,10 @@ abstract class FieldValidator implements CronFieldValidator
 
     public function isSatisfiedBy(string $fieldExpression, DateTimeInterface $date): bool
     {
+        if (!$this->isValid($fieldExpression)) {
+            return false;
+        }
+
         foreach (array_map('trim', explode(',', $fieldExpression)) as $expression) {
             if ($this->isSatisfiedExpression($expression, $date)) {
                 return true;
@@ -53,7 +57,7 @@ abstract class FieldValidator implements CronFieldValidator
         if (str_contains($fieldExpression, '/')) {
             [$range, $step] = explode('/', $fieldExpression);
 
-            return $this->isValid($range) && false !== filter_var($step, FILTER_VALIDATE_INT);
+            return $this->isValid($range) && false !== filter_var($step, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         }
 
         if (str_contains($fieldExpression, '-')) {
@@ -126,10 +130,6 @@ abstract class FieldValidator implements CronFieldValidator
     protected function isInIncrementsOfRanges(int $dateValue, string $value): bool
     {
         [$range, $step] = array_map('trim', explode('/', $value, 2)) + [1 => '0'];
-        // No step or 0 steps aren't cool
-        if ('0' === $step) {
-            return false;
-        }
 
         $step = (int) $step;
         // Expand the * to a full range

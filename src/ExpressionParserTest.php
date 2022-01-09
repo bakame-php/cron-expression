@@ -64,9 +64,10 @@ final class ExpressionParserTest extends TestCase
             'invalid weekday' => ['* 14 * * mon-fri0345345'],
             'invalid range in hour' => ['* 59-41 * * *'],
             'invalid range in weekday' => ['* * * * 8-3'],
+            'invalid range in minute' => ['59-41/4 * * * *'],
+            'invalid step' => ['1-8/0 * * * *'],
         ];
     }
-
 
     public function testItCanRegisterAnValidExpression(): void
     {

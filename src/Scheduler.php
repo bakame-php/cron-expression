@@ -322,6 +322,10 @@ final class Scheduler implements CronScheduler
         $nextRun = $date;
         do {
             start:
+            /**
+             * @var string $fieldExpression
+             * @var FieldValidator $fieldValidator
+             */
             foreach ($this->calculatedFields as [$fieldExpression, $fieldValidator]) {
                 if (!$fieldValidator->isSatisfiedBy($fieldExpression, $nextRun)) {
                     $nextRun = match ($direction) {

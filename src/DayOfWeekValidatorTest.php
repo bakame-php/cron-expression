@@ -50,10 +50,8 @@ final class DayOfWeekValidatorTest extends TestCase
      */
     public function testValidatesHashValueWeekday(): void
     {
-        $this->expectException(SyntaxError::class);
-
         $f = new DayOfWeekValidator();
-        self::assertTrue($f->isSatisfiedBy('12#1', new DateTime()));
+        self::assertFalse($f->isSatisfiedBy('12#1', new DateTime()));
     }
 
     /**
@@ -61,9 +59,8 @@ final class DayOfWeekValidatorTest extends TestCase
      */
     public function testValidatesHashValueNth(): void
     {
-        $this->expectException(SyntaxError::class);
         $f = new DayOfWeekValidator();
-        self::assertTrue($f->isSatisfiedBy('3#6', new DateTime()));
+        self::assertFalse($f->isSatisfiedBy('3#6', new DateTime()));
     }
 
     public function testValidateWeekendHash(): void
