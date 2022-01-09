@@ -146,11 +146,6 @@ final class ExpressionParser
         };
     }
 
-    public static function isRegisteredAlias(string $name): bool
-    {
-        return isset(self::$registeredAliases[$name]);
-    }
-
     public static function unregisterAlias(string $name): void
     {
         if (isset(self::DEFAULT_ALIASES[$name])) {
@@ -160,12 +155,18 @@ final class ExpressionParser
         unset(self::$registeredAliases[$name]);
     }
 
+    public static function supportsAlias(string $name): bool
+    {
+        return isset(self::$registeredAliases[$name]);
+    }
+
     /**
-     * Returns all registered expressions except the default ones.
+     * Returns all registered aliases as an associated array where the aliases are the key
+     * and their associated expressions are the values
      *
      * @return array<string, string>
      */
-    public static function registeredAliases(): array
+    public static function aliases(): array
     {
         return self::$registeredAliases;
     }

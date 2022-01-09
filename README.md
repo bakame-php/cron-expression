@@ -442,11 +442,11 @@ At any given time it is possible to:
 use Bakame\Cron\ExpressionParser;
 use Bakame\Cron\Scheduler;
 
-if (!ExpressionParser::isRegisteredAlias('@every')) {
+if (!ExpressionParser::supportsAlias('@every')) {
     ExpressionParser::registerAlias('@every', '* * * * *');
 }
 
-ExpressionParser::registeredAliases();
+ExpressionParser::aliases();
 // returns
 // array (
 //   '@yearly' => '0 0 1 1 *',
@@ -458,14 +458,14 @@ ExpressionParser::registeredAliases();
 //   '@hourly' => '0 * * * *',
 //   '@every' => '* * * * *',
 // )
-ExpressionParser::isRegisteredAlias('@foobar'); //return false
-ExpressionParser::isRegisteredAlias('@daily');  //return true
-ExpressionParser::isRegisteredAlias('@every');  //return true
+ExpressionParser::supportsAlias('@foobar'); //return false
+ExpressionParser::supportsAlias('@daily');  //return true
+ExpressionParser::supportsAlias('@every');  //return true
 
 ExpressionParser::unregisterAlias('@every');
 
-ExpressionParser::isRegisteredAlias('@every'); //return false
-ExpressionParser::unregisterAlias('@daily');   //throws RegistrationError exception
+ExpressionParser::supportsAlias('@every');   //return false
+ExpressionParser::unregisterAlias('@daily'); //throws RegistrationError exception
 ````
 
 ## Testing

@@ -72,16 +72,16 @@ final class ExpressionParserTest extends TestCase
     {
         ExpressionParser::registerAlias('@every', '* * * * *');
 
-        self::assertCount(8, ExpressionParser::registeredAliases());
-        self::assertArrayHasKey('@every', ExpressionParser::registeredAliases());
-        self::assertTrue(ExpressionParser::isRegisteredAlias('@every'));
+        self::assertCount(8, ExpressionParser::aliases());
+        self::assertArrayHasKey('@every', ExpressionParser::aliases());
+        self::assertTrue(ExpressionParser::supportsAlias('@every'));
         self::assertEquals(ExpressionParser::parse('@every'), ExpressionParser::parse('* * * * *'));
 
         ExpressionParser::unregisterAlias('@every');
 
-        self::assertCount(7, ExpressionParser::registeredAliases());
-        self::assertArrayNotHasKey('@every', ExpressionParser::registeredAliases());
-        self::assertFalse(ExpressionParser::isRegisteredAlias('@every'));
+        self::assertCount(7, ExpressionParser::aliases());
+        self::assertArrayNotHasKey('@every', ExpressionParser::aliases());
+        self::assertFalse(ExpressionParser::supportsAlias('@every'));
 
         $this->expectException(SyntaxError::class);
         ExpressionParser::parse('@every');
