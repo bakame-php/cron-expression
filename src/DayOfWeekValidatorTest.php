@@ -90,13 +90,14 @@ final class DayOfWeekValidatorTest extends TestCase
 
     public function testIssue47(): void
     {
+        $d = new DateTimeImmutable();
         $f = new DayOfWeekValidator();
-        self::assertFalse($f->isValid('mon,'));
-        self::assertFalse($f->isValid('mon-'));
-        self::assertFalse($f->isValid('*/2,'));
-        self::assertFalse($f->isValid('-mon'));
-        self::assertFalse($f->isValid(',1'));
-        self::assertFalse($f->isValid('*-'));
-        self::assertFalse($f->isValid(',-'));
+        self::assertFalse($f->isSatisfiedBy('mon,', $d));
+        self::assertFalse($f->isSatisfiedBy('mon-', $d));
+        self::assertFalse($f->isSatisfiedBy('*/2,', $d));
+        self::assertFalse($f->isSatisfiedBy('-mon', $d));
+        self::assertFalse($f->isSatisfiedBy(',1', $d));
+        self::assertFalse($f->isSatisfiedBy('*-', $d));
+        self::assertFalse($f->isSatisfiedBy(',-', $d));
     }
 }

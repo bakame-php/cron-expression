@@ -41,9 +41,11 @@ final class MinuteValidatorTest extends TestCase
 
     public function testBadSyntaxesShouldNotValidate(): void
     {
+        $d = new DateTimeImmutable();
         $f = new MinuteValidator();
-        self::assertFalse($f->isValid('*-1'));
-        self::assertFalse($f->isValid('1-2-3'));
-        self::assertFalse($f->isValid('-1'));
+        self::assertFalse($f->isSatisfiedBy('*-1', $d));
+        self::assertFalse($f->isSatisfiedBy('1-2-3', $d));
+        self::assertFalse($f->isSatisfiedBy('-1', $d));
+        self::assertFalse($f->isSatisfiedBy('4-5/0', $d));
     }
 }

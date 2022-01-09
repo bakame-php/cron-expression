@@ -64,10 +64,6 @@ final class DayOfWeekValidator extends FieldValidator
 
         // Handle # hash tokens
         if (str_contains($fieldExpression, '#')) {
-            if (!$this->handleSharpExpression($fieldExpression)) {
-                throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_WEEK->value => $fieldExpression]);
-            }
-
             [$weekday, $nth] = explode('#', $fieldExpression);
             $nth = (int) $nth;
             if ($weekday === '0') {

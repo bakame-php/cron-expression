@@ -66,6 +66,7 @@ final class ExpressionParserTest extends TestCase
             'invalid range in weekday' => ['* * * * 8-3'],
             'invalid range in minute' => ['59-41/4 * * * *'],
             'invalid step' => ['1-8/0 * * * *'],
+            'invalid day of week modifier' => ['* * * * 3#L'],
         ];
     }
 
@@ -104,7 +105,7 @@ final class ExpressionParserTest extends TestCase
 
     public function testItWillFailToRegisterAValidNameTwice(): void
     {
-        ExpressionParser::registerAlias('@every', '* * * * *');
+        ExpressionParser::registerAlias('@EveRy', '* * * * *');
 
         $this->expectException(ExpressionAliasError::class);
         ExpressionParser::registerAlias('@every', '2 2 2 2 2');
