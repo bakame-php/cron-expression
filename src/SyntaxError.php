@@ -60,16 +60,6 @@ final class SyntaxError extends InvalidArgumentException implements CronError
         return new self('The string `'.$interval.'` is not a valid `DateInterval::createFromDateString` input.');
     }
 
-    public static function dueToInvalidStartDatePresence(): self
-    {
-        return new self('Unsupported or invalid start date presence value.');
-    }
-
-    public static function dueToInvalidMaxIterationCount(int $count): self
-    {
-        return new self("maxIterationCount must be an integer greater or equal to 0. $count given");
-    }
-
     public static function dueToNegativeRecurrences(): self
     {
         return new self('The recurrence MUST be an integer greater or equal to 0.');

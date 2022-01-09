@@ -6,9 +6,6 @@ namespace Bakame\Cron;
 
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \Bakame\Cron\ExpressionParser
- */
 final class ExpressionParserTest extends TestCase
 {
     public function testValidationWorks(): void
@@ -69,6 +66,7 @@ final class ExpressionParserTest extends TestCase
             'invalid range in weekday' => ['* * * * 8-3'],
         ];
     }
+
 
     public function testItCanRegisterAnValidExpression(): void
     {
