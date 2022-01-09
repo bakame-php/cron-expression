@@ -12,34 +12,34 @@ interface CronExpression
     /**
      * Returns the CRON expression fields as array.
      *
-     * @return array<string, string>
+     * @return array<string, CronField>
      */
     public function fields(): array;
 
     /**
      * Returns the minute field of the CRON expression.
      */
-    public function minute(): string;
+    public function minute(): CronField;
 
     /**
      * Returns the hour field of the CRON expression.
      */
-    public function hour(): string;
+    public function hour(): CronField;
 
     /**
      * Returns the day of the month field of the CRON expression.
      */
-    public function dayOfMonth(): string;
+    public function dayOfMonth(): CronField;
 
     /**
      * Returns the month field of the CRON expression.
      */
-    public function month(): string;
+    public function month(): CronField;
 
     /**
      * Returns the day of the week field of the CRON expression.
      */
-    public function dayOfWeek(): string;
+    public function dayOfWeek(): CronField;
 
     /**
      * Returns the string representation of the CRON expression.
@@ -52,7 +52,7 @@ interface CronExpression
      * @throws CronError if the value is not valid for the part
      *
      */
-    public function withMinute(string $fieldExpression): self;
+    public function withMinute(CronField|string $fieldExpression): self;
 
     /**
      * Set the hour field of the CRON expression.
@@ -60,7 +60,7 @@ interface CronExpression
      * @throws CronError if the value is not valid for the part
      *
      */
-    public function withHour(string $fieldExpression): self;
+    public function withHour(CronField|string $fieldExpression): self;
 
     /**
      * Set the day of month field of the CRON expression.
@@ -68,7 +68,7 @@ interface CronExpression
      * @throws CronError if the value is not valid for the part
      *
      */
-    public function withDayOfMonth(string $fieldExpression): self;
+    public function withDayOfMonth(CronField|string $fieldExpression): self;
 
     /**
      * Set the month field of the CRON expression.
@@ -76,7 +76,7 @@ interface CronExpression
      * @throws CronError if the value is not valid for the part
      *
      */
-    public function withMonth(string $fieldExpression): self;
+    public function withMonth(CronField|string $fieldExpression): self;
 
     /**
      * Set the day of the week field of the CRON expression.
@@ -84,5 +84,5 @@ interface CronExpression
      * @throws CronError if the value is not valid for the part
      *
      */
-    public function withDayOfWeek(string $fieldExpression): self;
+    public function withDayOfWeek(CronField|string $fieldExpression): self;
 }

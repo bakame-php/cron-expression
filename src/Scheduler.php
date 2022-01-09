@@ -20,10 +20,9 @@ final class Scheduler implements CronScheduler
 
     /** Internal variables to optimize runs calculation */
 
-    /** @var array<string, array{0:string, 1:CronFieldValidator}>  */
+    /** @var array<string, CronField>  */
     private array $calculatedFields;
     private bool $includeDayOfWeekAndDayOfMonthExpression;
-    private string|null $minuteFieldExpression;
 
     public function __construct(
         CronExpression|string $expression,
@@ -60,9 +59,9 @@ final class Scheduler implements CronScheduler
         $this->calculatedFields = [];
         $expressionFields = $this->expression->fields();
         foreach (ExpressionField::orderedFields() as $field) {
-            $fieldExpression = $expressionFields[$field->value];
+            $fieldExpression = $expressionFields[$field->value]->toString();
             if ('*' !== $fieldExpression) {
-                $this->calculatedFields[$field->value] = [$fieldExpression, $field->validator()];
+                $this->calculatedFields[$field->value] = $expressionFields[$field->value];
             }
         }
 
@@ -70,7 +69,6 @@ final class Scheduler implements CronScheduler
             $this->calculatedFields[ExpressionField::DAY_OF_MONTH->value],
             $this->calculatedFields[ExpressionField::DAY_OF_WEEK->value]
         );
-        $this->minuteFieldExpression = $this->calculatedFields[ExpressionField::MINUTE->value][0] ?? null;
     }
 
     public static function fromUTC(CronExpression|string $expression): self
@@ -245,13 +243,13 @@ final class Scheduler implements CronScheduler
         $run = $this->toDateTimeImmutable($startDate);
         $startDatePresence = $this->startDatePresence;
         $modifier = match ($direction) {
-            self::BACKWARD => ExpressionField::MINUTE->validator()->decrement(...),
-            default => ExpressionField::MINUTE->validator()->increment(...),
+            self::BACKWARD => $this->expression->minute()->decrement(...),
+            default => $this->expression->minute()->increment(...),
         };
         while ($i < $recurrences) {
             yield $this->nextRun($run, $startDatePresence, $direction);
 
-            $run = $modifier($this->nextRun($run, $startDatePresence, $direction), $this->minuteFieldExpression);
+            $run = $modifier($this->nextRun($run, $startDatePresence, $direction));
             $startDatePresence = StartDatePresence::INCLUDED;
             ++$i;
         }
@@ -276,7 +274,7 @@ final class Scheduler implements CronScheduler
 
             yield $run;
 
-            $startDate = ExpressionField::MINUTE->validator()->increment($run, $this->minuteFieldExpression);
+            $startDate = $this->expression->minute()->increment($run);
             $startDatePresence = StartDatePresence::INCLUDED;
         }
     }
@@ -300,7 +298,7 @@ final class Scheduler implements CronScheduler
 
             yield $run;
 
-            $endDate = ExpressionField::MINUTE->validator()->decrement($run, $this->minuteFieldExpression);
+            $endDate = $this->expression->minute()->decrement($run);
             $startDatePresence = StartDatePresence::INCLUDED;
         }
     }
@@ -315,22 +313,18 @@ final class Scheduler implements CronScheduler
         }
 
         $modifier = match ($direction) {
-            self::BACKWARD => ExpressionField::MINUTE->validator()->decrement(...),
-            default => ExpressionField::MINUTE->validator()->increment(...),
+            self::BACKWARD => $this->expression->minute()->decrement(...),
+            default => $this->expression->minute()->increment(...),
         };
 
         $nextRun = $date;
         do {
             start:
-            /**
-             * @var string $fieldExpression
-             * @var FieldValidator $fieldValidator
-             */
-            foreach ($this->calculatedFields as [$fieldExpression, $fieldValidator]) {
-                if (!$fieldValidator->isSatisfiedBy($fieldExpression, $nextRun)) {
+            foreach ($this->calculatedFields as $field) {
+                if (!$field->isSatisfiedBy($nextRun)) {
                     $nextRun = match ($direction) {
-                        self::BACKWARD => $fieldValidator->decrement($nextRun, $fieldExpression),
-                        default => $fieldValidator->increment($nextRun, $fieldExpression),
+                        self::BACKWARD => $field->decrement($nextRun),
+                        default => $field->increment($nextRun),
                     };
                     goto start;
                 }
@@ -339,7 +333,7 @@ final class Scheduler implements CronScheduler
             if ($startDatePresence === StartDatePresence::INCLUDED || $nextRun !== $date) {
                 return $nextRun;
             }
-        } while ($nextRun = $modifier($nextRun, $this->minuteFieldExpression));
+        } while ($nextRun = $modifier($nextRun));
     }
 
     /**

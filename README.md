@@ -212,20 +212,11 @@ representing a CRON expression.
 use Bakame\Cron\Expression;
 
 $cron = new Expression('3-59/15 6-12 */15 1 2-5');
-echo $cron->minute();     //displays '3-59/15'
-echo $cron->hour();       //displays '6-12'
-echo $cron->dayOfMonth(); //displays '*/15'
-echo $cron->month();      //displays '1'
-echo $cron->dayOfWeek();  //displays '2-5'
-var_export($cron->fields());
-//returns 
-//array (
-//  'minute' => '3-59/15',
-//  'hour' => '6-12',
-//  'dayOfMonth' => '*/15',
-//  'month' => '1',
-//  'dayOfWeek' => '2-5',
-//)
+echo $cron->minute()->toString();     //displays '3-59/15'
+echo $cron->hour()->toString();       //displays '6-12'
+echo $cron->dayOfMonth()->toString(); //displays '*/15'
+echo $cron->month()->toString();      //displays '1'
+echo $cron->dayOfWeek()->toString();  //displays '2-5'
 ```
 
 It is possible to also use an associative array using the same index as the one returned by `ExpressionParser::parse` method
@@ -236,11 +227,11 @@ It is possible to also use an associative array using the same index as the one 
 use Bakame\Cron\Expression;
 
 $cron = Expression::fromFields(['minute' => 7, 'dayOfWeek' => '5']);
-echo $cron->minute();     //displays '7'
-echo $cron->hour();       //displays '*'
-echo $cron->dayOfMonth(); //displays '*'
-echo $cron->month();      //displays '*'
-echo $cron->dayOfWeek();  //displays '5'
+echo $cron->minute()->toString();     //displays '7'
+echo $cron->hour()->toString();       //displays '*'
+echo $cron->dayOfMonth()->toString(); //displays '*'
+echo $cron->month()->toString();      //displays '*'
+echo $cron->dayOfWeek()->toString();  //displays '5'
 ```
 
 **If a field is not provided it will be replaced by the `*` character.**
@@ -279,11 +270,9 @@ echo $cron;              //display '3-59/15 6-12 */15 1 2-5'
 echo json_encode($cron); //display '"3-59\/15 6-12 *\/15 1 2-5"'
 ```
 
-To work as intended, The `Bakame\Cron\Expression` uses under the hood the `Bakame\Cron\ExpressionParser` class.
-
 ### Parsing a CRON Expression
 
-This package resolves CRON Expression as they are described in the [CRONTAB documentation](https://www.unix.com/man-page/linux/5/crontab/)
+To work as intended, The `Bakame\Cron\Expression` resolves CRON Expression as they are described in the [CRONTAB documentation](https://www.unix.com/man-page/linux/5/crontab/)
 
 A CRON expression is a string representing the schedule for a particular command to execute.  The parts of a CRON schedule are as follows:
 
@@ -304,96 +293,59 @@ The package also supports the following notation:
 - **#:** allowed for the `dayOfWeek` field, and must be followed by a number between one and five;
 - range, split notations as well as the **?** character;
 
-The `Bakame\Cron\ExpressionParser` class is responsible for parsing a CRON expression and converting it into a PHP associative `array` as shown below:
 
-```php
-<?php
-
-use Bakame\Cron\ExpressionParser;
-
-require_once '/vendor/autoload.php';
-
-var_export(ExpressionParser::parse('3-59/15 6-12 */15 1 2-5'));
-// returns the following array
-// array(
-//   'minute' => '3-59/15',
-//   'hour' => '6-12',
-//   'dayOfMonth' => '*/15',
-//   'month' => '1',
-//   'dayOfWeek' => '2-5',
-// )
-```
-
-Each array offset is representative of a cron expression field, The `Bakame\Cron\ExpressionField` backed enum exposes those 
-offsets via descriptive cases, following the table below:
-
-| CRON field   | array offset | ExpressionField Enum           |
-|--------------|--------------|--------------------------------|
-| minute       | `minute`     | `ExpressionField::MINUTE`      |
-| hour         | `hour`       | `ExpressionField::HOUR`        |
-| day of month | `dayOfMonth` | `ExpressionField::DAY_OF_WEEK` |
-| month        | `month`      | `ExpressionField::MONTH`       |
-| day of week  | `dayOfWeek`  | `ExpressionField::DAY_OF_WEEK` |
-
-```php
-echo ExpressionParser::parse('3-59/15 6-12 */15 1 2-5')[ExpressionField::MONTHDAY->value];
-// display '*/15'
-```
-
-In case of error a `Bakame\Cron\ExpressionParser` exception will be thrown if the submitted string is not 
+In case of error a `Bakame\Cron\SyntaxError` exception will be thrown if the submitted string is not 
 a valid CRON expression.
 
 ```php
-ExpressionParser::parse('not a real CRON expression');
+new Expression('not a real CRON expression');
 // throws a Bakame\Cron\SyntaxError with the following message 'Invalid CRON expression'
 // calling SyntaxError::errors method will list the errors and the fields where it occurred.
 ```
 
 ### Validating a CRON Expression
 
-Validating a CRON Expression is done using the `Bakame\Cron\ExpressionParser::isValid` method:
+By instantiating an `Expression` object you are validating its associated CRON Expression.
 
 ```php
-ExpressionParser::isValid('not a real CRON expression'); // will return false
+new ExpressionParser('not a real CRON expression'); // will throw a SyntaxError
 ```
 
-Validation of a specific CRON expression field can be done using the `ExpressionField::validator` method.  
-This method returns the corresponding `CronFieldValidator` object for a given `ExpressionField` enum which validates 
-the requested field:
+Validation of a specific CRON expression field can be done using a `CronField` implementing object:
 
 ```php
 <?php
-$fieldValidator = ExpressionField::MONTH->validator(); 
-$fieldValidator->isValid('JAN'); //return true `JAN` is a valid month field value
-$fieldValidator->isValid(23);    //return false `23` is invalid for the month field
+use Bakame\Cron\MonthField;
+$field = new MonthField('JAN'); //!works
+$field = new MonthField(23);    //will throw a SyntaxError
 ```
 
-It is also possible to validate a date against a specific field expression using a `CronFieldValidator` object.
+It is also possible to validate a date against a specific field expression using a `CronField` object.
 
 ```php
-use Bakame\Cron\ExpressionField;
+use Bakame\Cron\HourField;
 
-$hourValidator = ExpressionField::HOUR->validator();
-$hourValidator->isSatisfiedBy('*/3', new DateTime('2014-04-07 00:00:00')); // returns true
+$field = new HourField('*/3'); //!works
+$field->isSatisfiedBy(new DateTime('2014-04-07 00:00:00')); // returns true
 ```
 
 **NOTICE: Field validator do not take into account the `DateTimeInterface` object timezone**
 
 ### Registering CRON Expression Aliases
 
-The `ExpressionParser` class is able to handle the all default aliases for CRON expression except one. 
-You have them also exposed as named constructors on the `Expression` class
+The `Expression` class is able to handle all default aliases for CRON expression except one. 
+You have them also exposed as named constructors.
 
-| Special expression | meaning              | Expression constructor | Expression shortcut     |
-|--------------------|----------------------|------------------------|-------------------------|
-| `@reboot`          | Run once, at startup | **Not supported**      | **Not supported**       |
-| `@yearly`          | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
-| `@annually`        | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
-| `@monthly`         | Run once a month     | `0 0 1 * *`            | `Expression::monthly()` |
-| `@weekly`          | Run once a week      | `0 0 * * 0`            | `Expression::weekly()`  |
-| `@daily`           | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
-| `@midnight`        | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
-| `@hourly`          | Run once a hour      | `0 * * * *`            | `Expression::hourly()`  |
+| Alias       | meaning              | Expression constructor | Expression shortcut     |
+|-------------|----------------------|------------------------|-------------------------|
+| `@reboot`   | Run once, at startup | **Not supported**      | **Not supported**       |
+| `@yearly`   | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
+| `@annually` | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
+| `@monthly`  | Run once a month     | `0 0 1 * *`            | `Expression::monthly()` |
+| `@weekly`   | Run once a week      | `0 0 * * 0`            | `Expression::weekly()`  |
+| `@daily`    | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
+| `@midnight` | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
+| `@hourly`   | Run once a hour      | `0 * * * *`            | `Expression::hourly()`  |
 
 ```php
 <?php
@@ -403,30 +355,20 @@ use Bakame\Cron\ExpressionParser;
 
 echo Expression::daily()->toString();         // displays "0 0 * * *"
 echo (new Expression('@DAILY'))->toString();  // displays "0 0 * * *"
-
-ExpressionParser::parse('@dAiLY');
-// returns the following array
-// array(
-//   'minute' => '0',
-//   'hour' => '0',
-//   'dayOfMonth' => '*',
-//   'month' => '*',
-//   'dayOfWeek' => '*',
-// )
 ```
 
 It is possible to register more expressions via an alias name. Once registered it will be available when using the `Expression` object
-but also when using the `Scheduler` class. 
+but also when instantiating the `Scheduler` class with a CRON expression string. 
 An alias name needs to be a single word containing only ASCII letters and number and prefixed with the `@` character. They should be
 associated with any valid expression.
 
 ```php
 <?php
 
-use Bakame\Cron\ExpressionParser;
+use Bakame\Cron\Expression;
 use Bakame\Cron\Scheduler;
 
-ExpressionParser::registerAlias('@every', '* * * * *');
+Expression::registerAlias('@every', '* * * * *');
 Scheduler::fromUTC('@every')->run('TODAY', 2)->format('c');
 // display 2022-01-08T00:03:00+00:00
 ````
@@ -439,14 +381,14 @@ At any given time it is possible to:
 ```php
 <?php
 
-use Bakame\Cron\ExpressionParser;
+use Bakame\Cron\Expression;
 use Bakame\Cron\Scheduler;
 
-if (!ExpressionParser::supportsAlias('@every')) {
-    ExpressionParser::registerAlias('@every', '* * * * *');
+if (!Expression::supportsAlias('@every')) {
+    Expression::registerAlias('@every', '* * * * *');
 }
 
-ExpressionParser::aliases();
+Expression::aliases();
 // returns
 // array (
 //   '@yearly' => '0 0 1 1 *',
@@ -458,14 +400,14 @@ ExpressionParser::aliases();
 //   '@hourly' => '0 * * * *',
 //   '@every' => '* * * * *',
 // )
-ExpressionParser::supportsAlias('@foobar'); //return false
-ExpressionParser::supportsAlias('@daily');  //return true
-ExpressionParser::supportsAlias('@every');  //return true
+Expression::supportsAlias('@foobar'); //return false
+Expression::supportsAlias('@daily');  //return true
+Expression::supportsAlias('@every');  //return true
 
-ExpressionParser::unregisterAlias('@every');
+Expression::unregisterAlias('@every');
 
-ExpressionParser::supportsAlias('@every');   //return false
-ExpressionParser::unregisterAlias('@daily'); //throws RegistrationError exception
+Expression::supportsAlias('@every');   //return false
+Expression::unregisterAlias('@daily'); //throws RegistrationError exception
 ````
 
 ## Testing

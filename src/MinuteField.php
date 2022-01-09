@@ -11,7 +11,7 @@ use DateTimeInterface;
 /**
  * Minutes field.  Allows: * , / -.
  */
-final class MinuteValidator extends FieldValidator
+final class MinuteField extends Field
 {
     protected const RANGE_START = 0;
     protected const RANGE_END = 59;
@@ -22,15 +22,15 @@ final class MinuteValidator extends FieldValidator
             || $this->isSatisfied((int) $date->format('i'), $fieldExpression);
     }
 
-    public function increment(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
+    public function increment(DateTimeInterface $date): DateTimeImmutable
     {
         $date = $this->toDateTimeImmutable($date);
-        if (null === $fieldExpression) {
+        if ('*' === $this->field) {
             return $date->add(new DateInterval('PT1M'));
         }
 
         $currentMinute = (int) $date->format('i');
-        $minute = $this->computeTimeFieldRangeValue($currentMinute, $fieldExpression, false);
+        $minute = $this->computeTimeFieldRangeValue($currentMinute, $this->field, false);
         if ($currentMinute < $minute) {
             return $date->add(new DateInterval('PT'.($minute - $currentMinute).'M'));
         }
@@ -38,15 +38,15 @@ final class MinuteValidator extends FieldValidator
         return $date->add(new DateInterval('PT'.(60 - $currentMinute).'M'));
     }
 
-    public function decrement(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
+    public function decrement(DateTimeInterface $date): DateTimeImmutable
     {
         $date = $this->toDateTimeImmutable($date);
-        if (null === $fieldExpression) {
+        if ('*' === $this->field) {
             return $date->sub(new DateInterval('PT1M'));
         }
 
         $currentMinute = (int) $date->format('i');
-        $minute = $this->computeTimeFieldRangeValue($currentMinute, $fieldExpression, true);
+        $minute = $this->computeTimeFieldRangeValue($currentMinute, $this->field, true);
         if ($minute < $currentMinute) {
             return $date->sub(new DateInterval('PT'.($currentMinute - $minute).'M'));
         }

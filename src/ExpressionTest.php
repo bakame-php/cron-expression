@@ -24,14 +24,14 @@ final class ExpressionTest extends TestCase
     {
         // '2010-09-10 12:00:00'
         $cron = new Expression('1 2-4 * 4,5,6 */3');
-        self::assertSame('1', $cron->minute());
-        self::assertSame('2-4', $cron->hour());
-        self::assertSame('*', $cron->dayOfMonth());
-        self::assertSame('4,5,6', $cron->month());
-        self::assertSame('*/3', $cron->dayOfWeek());
+        self::assertSame('1', $cron->minute()->toString());
+        self::assertSame('2-4', $cron->hour()->toString());
+        self::assertSame('*', $cron->dayOfMonth()->toString());
+        self::assertSame('4,5,6', $cron->month()->toString());
+        self::assertSame('*/3', $cron->dayOfWeek()->toString());
         self::assertSame('1 2-4 * 4,5,6 */3', $cron->toString());
         self::assertSame('1 2-4 * 4,5,6 */3', (string) $cron);
-        self::assertSame(['1', '2-4', '*', '4,5,6', '*/3'], array_values($cron->fields()));
+        self::assertSame(['1', '2-4', '*', '4,5,6', '*/3'], array_values(array_map(fn (CronField $f): string => $f->toString(), $cron->fields())));
         self::assertSame('"1 2-4 * 4,5,6 *\/3"', json_encode($cron));
     }
 
@@ -49,11 +49,11 @@ final class ExpressionTest extends TestCase
     {
         $cron = new Expression($schedule);
 
-        self::assertSame($expected[0], $cron->minute());
-        self::assertSame($expected[1], $cron->hour());
-        self::assertSame($expected[2], $cron->dayOfMonth());
-        self::assertSame($expected[3], $cron->month());
-        self::assertSame($expected[4], $cron->dayOfWeek());
+        self::assertSame($expected[0], $cron->minute()->toString());
+        self::assertSame($expected[1], $cron->hour()->toString());
+        self::assertSame($expected[2], $cron->dayOfMonth()->toString());
+        self::assertSame($expected[3], $cron->month()->toString());
+        self::assertSame($expected[4], $cron->dayOfWeek()->toString());
     }
 
     /**
@@ -73,11 +73,11 @@ final class ExpressionTest extends TestCase
     {
         $cron = new Expression('23 0-23/2 * * *');
 
-        self::assertSame($cron, $cron->withMinute($cron->minute()));
-        self::assertSame($cron, $cron->withHour($cron->hour()));
-        self::assertSame($cron, $cron->withMonth($cron->month()));
-        self::assertSame($cron, $cron->withDayOfMonth($cron->dayOfMonth()));
-        self::assertSame($cron, $cron->withDayOfWeek($cron->dayOfWeek()));
+        self::assertEquals($cron, $cron->withMinute($cron->minute()));
+        self::assertEquals($cron, $cron->withHour('0-23/2'));
+        self::assertEquals($cron, $cron->withMonth($cron->month()));
+        self::assertEquals($cron, $cron->withDayOfMonth('*'));
+        self::assertEquals($cron, $cron->withDayOfWeek($cron->dayOfWeek()));
     }
 
     public function testUpdateCronExpressionPartReturnsADifferentInstance(): void
@@ -89,13 +89,6 @@ final class ExpressionTest extends TestCase
         self::assertNotEquals($cron, $cron->withDayOfMonth('28'));
         self::assertNotEquals($cron, $cron->withMonth('12'));
         self::assertNotEquals($cron, $cron->withDayOfWeek('Fri'));
-    }
-
-    public function testInvalidPartsWillFail(): void
-    {
-        $this->expectException(SyntaxError::class);
-
-        (new Expression('* * * * *'))->withDayOfWeek('abc');
     }
 
     public function testInstantiationFromFieldsList(): void
@@ -118,5 +111,103 @@ final class ExpressionTest extends TestCase
         $cron = eval('return '.var_export($cronOriginal, true).';');
 
         self::assertEquals($cronOriginal, $cron);
+    }
+
+    /**
+     * @dataProvider validExpressionProvider
+     */
+    public function testDoubleZeroIsValid(string $expression): void
+    {
+        $obj = new Expression($expression);
+
+        self::assertSame($expression, $obj->toString());
+    }
+
+    public function validExpressionProvider(): array
+    {
+        return [
+            ['00 * * * *'],
+            ['01 * * * *'],
+            ['* 00 * * *'],
+            ['* 01 * * *'],
+            ['* * * * 1'],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidCronExpression
+     */
+    public function testParsingFails(string $expression): void
+    {
+        $this->expectException(SyntaxError::class);
+
+        new Expression($expression);
+    }
+
+    public function invalidCronExpression(): array
+    {
+        return [
+            'less than 5 fields' => ['* * * 1'],
+            'more than 5 fields' => ['* * * * * *'],
+            'invalid monthday field' => ['* * abc * *'],
+            'invalid month field' => ['* * * 13 * '],
+            'invalid minute field' => ['90 * * * *'],
+            'invalid hour field value' => ['0 24 1 12 0'],
+            'invalid weekday' => ['* 14 * * mon-fri0345345'],
+            'invalid range in hour' => ['* 59-41 * * *'],
+            'invalid range in weekday' => ['* * * * 8-3'],
+            'invalid range in minute' => ['59-41/4 * * * *'],
+            'invalid step' => ['1-8/0 * * * *'],
+            'invalid day of week modifier' => ['* * * * 3#L'],
+            'many errors' => ['990 14 * * mon-fri0345345'],
+        ];
+    }
+
+    public function testItCanRegisterAnValidExpression(): void
+    {
+        Expression::registerAlias('@every', '* * * * *');
+
+        self::assertCount(8, Expression::aliases());
+        self::assertArrayHasKey('@every', Expression::aliases());
+        self::assertTrue(Expression::supportsAlias('@every'));
+        self::assertEquals(new Expression('@every'), new Expression('* * * * *'));
+
+        Expression::unregisterAlias('@every');
+
+        self::assertCount(7, Expression::aliases());
+        self::assertArrayNotHasKey('@every', Expression::aliases());
+        self::assertFalse(Expression::supportsAlias('@every'));
+
+        $this->expectException(SyntaxError::class);
+        new Expression('@every');
+    }
+
+    public function testItWillFailToRegisterAnInvalidExpression(): void
+    {
+        $this->expectException(ExpressionAliasError::class);
+
+        Expression::registerAlias('@every', 'foobar');
+    }
+
+    public function testItWillFailToRegisterAnInvalidName(): void
+    {
+        $this->expectException(ExpressionAliasError::class);
+
+        Expression::registerAlias('every', '* * * * *');
+    }
+
+    public function testItWillFailToRegisterAValidNameTwice(): void
+    {
+        Expression::registerAlias('@EveRy', '* * * * *');
+
+        $this->expectException(ExpressionAliasError::class);
+        Expression::registerAlias('@every', '2 2 2 2 2');
+    }
+
+    public function testItWillFailToUnregisterADefaultExpression(): void
+    {
+        $this->expectException(ExpressionAliasError::class);
+
+        Expression::unregisterAlias('@daily');
     }
 }

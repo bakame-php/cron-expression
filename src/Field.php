@@ -6,27 +6,62 @@ namespace Bakame\Cron;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use JsonSerializable;
+use Stringable;
 
 /**
  * Abstract CRON expression field.
  */
-abstract class FieldValidator implements CronFieldValidator
+abstract class Field implements CronField, JsonSerializable, Stringable
 {
     protected const RANGE_START = 0;
     protected const RANGE_END = 0;
 
     /** Literal values we need to convert to integers. */
     protected array $literals = [];
-
+    protected string $field;
     abstract protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool;
 
-    public function isSatisfiedBy(string $fieldExpression, DateTimeInterface $date): bool
+    /**
+     * @final
+     */
+    public function __construct(string $field)
     {
-        if (!$this->isValid($fieldExpression)) {
-            return false;
+        if (!$this->isValid($field)) {
+            throw SyntaxError::dueToInvalidExpression($field);
         }
 
-        foreach (array_map('trim', explode(',', $fieldExpression)) as $expression) {
+        $this->field = $field;
+    }
+
+    /**
+     * @final
+     *
+     * @param array{field:string} $properties
+     */
+    public static function __set_state(array $properties): static
+    {
+        return new static($properties['field']);
+    }
+
+    public function toString(): string
+    {
+        return $this->field;
+    }
+
+    public function __toString(): string
+    {
+        return $this->toString();
+    }
+
+    public function jsonSerialize(): string
+    {
+        return $this->toString();
+    }
+
+    public function isSatisfiedBy(DateTimeInterface $date): bool
+    {
+        foreach (array_map('trim', explode(',', $this->field)) as $expression) {
             if ($this->isSatisfiedExpression($expression, $date)) {
                 return true;
             }
@@ -35,7 +70,7 @@ abstract class FieldValidator implements CronFieldValidator
         return false;
     }
 
-    public function isValid(string $fieldExpression): bool
+    protected function isValid(string $fieldExpression): bool
     {
         $fieldExpression = $this->convertLiterals($fieldExpression);
 

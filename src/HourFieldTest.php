@@ -9,17 +9,31 @@ use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @coversDefaultClass \Bakame\Cron\HourValidator
+ * @coversDefaultClass \Bakame\Cron\HourField
  */
-final class HourValidatorTest extends TestCase
+final class HourFieldTest extends TestCase
 {
-    public function testValidatesField(): void
+    /**
+     * @dataProvider validFieldExpression
+     */
+    public function testValidatesField(string $expression): void
     {
-        $f = new HourValidator();
-        self::assertTrue($f->isValid('1'));
-        self::assertTrue($f->isValid('*'));
-        self::assertTrue($f->isValid('*/3,1,1-12'));
-        self::assertTrue($f->isValid('5-7,11-13'));
+        $f = new HourField($expression);
+
+        self::assertSame($expression, $f->toString());
+    }
+
+    /**
+     * @return array<array<string>>
+     */
+    public function validFieldExpression(): array
+    {
+        return [
+            ['1'],
+            ['*'],
+            ['*/3,1,1-12'],
+            ['5-7,11-13'],
+        ];
     }
 
     /**
@@ -27,7 +41,7 @@ final class HourValidatorTest extends TestCase
      */
     public function testIncrementsDate(DateTimeImmutable|DateTime $d, string $increment, string $decrement): void
     {
-        $f = new HourValidator();
+        $f = new HourField('*');
         self::assertSame($increment, $f->increment($d)->format('Y-m-d H:i:s'));
 
         $d = $d->setTime(11, 15, 0);
@@ -55,10 +69,10 @@ final class HourValidatorTest extends TestCase
         $tz = date_default_timezone_get();
         date_default_timezone_set('America/St_Johns');
         $d = new DateTime('2011-03-15 11:15:00');
-        $f = new HourValidator();
+        $f = new HourField('*');
         self::assertSame('2011-03-15 12:00:00', $f->increment($d)->format('Y-m-d H:i:s'));
 
-        $d->setTime(11, 15, 0);
+        $d->setTime(11, 15);
         self::assertSame('2011-03-15 10:59:00', $f->decrement($d)->format('Y-m-d H:i:s'));
         date_default_timezone_set($tz);
     }
@@ -68,7 +82,7 @@ final class HourValidatorTest extends TestCase
         $tz = date_default_timezone_get();
         date_default_timezone_set('Asia/Kathmandu');
         $d = new DateTime('2011-03-15 11:15:00');
-        $f = new HourValidator();
+        $f = new HourField('*');
         self::assertSame('2011-03-15 12:00:00', $f->increment($d)->format('Y-m-d H:i:s'));
 
         $d->setTime(11, 15, 0);

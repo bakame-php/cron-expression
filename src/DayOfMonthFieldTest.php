@@ -9,30 +9,49 @@ use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @coversDefaultClass \Bakame\Cron\DayOfMonthValidator
+ * @coversDefaultClass \Bakame\Cron\DayOfMonthField
  */
-final class DayOfMonthValidatorTest extends TestCase
+final class DayOfMonthFieldTest extends TestCase
 {
-    public function testValidatesField(): void
+    /**
+     * @dataProvider validFieldExpression
+     */
+    public function testValidatesField(string $expression): void
     {
-        $f = new DayOfMonthValidator();
-        self::assertTrue($f->isValid('1'));
-        self::assertTrue($f->isValid('*'));
-        self::assertTrue($f->isValid('L'));
-        self::assertTrue($f->isValid('5W'));
-        self::assertFalse($f->isValid('5W,L'));
-        self::assertFalse($f->isValid('1.'));
+        $f = new DayOfMonthField($expression);
+
+        self::assertSame($expression, $f->toString());
+    }
+
+    /**
+     * @return array<array<string>>
+     */
+    public function validFieldExpression(): array
+    {
+        return [
+            ['1'],
+            ['*'],
+            ['L'],
+            ['5W'],
+        ];
+    }
+
+    public function testFailingValidation(): void
+    {
+        $this->expectException(SyntaxError::class);
+
+        new MonthField('1.fix-regexp');
     }
 
     public function testChecksIfSatisfied(): void
     {
-        $f = new DayOfMonthValidator();
-        self::assertTrue($f->isSatisfiedBy('?', new DateTime()));
+        $f = new DayOfMonthField('?');
+        self::assertTrue($f->isSatisfiedBy(new DateTime()));
     }
 
     public function testIncrementsDate(): void
     {
-        $f = new DayOfMonthValidator();
+        $f = new DayOfMonthField('*');
         $date = '2011-03-15 11:15:00';
         self::assertSame(
             '2011-03-16 00:00:00',
@@ -48,7 +67,7 @@ final class DayOfMonthValidatorTest extends TestCase
 
     public function testIncrementsDateImmutable(): void
     {
-        $f = new DayOfMonthValidator();
+        $f = new DayOfMonthField('*');
         $date = '2011-03-15 11:15:00';
         self::assertSame(
             '2011-03-16 00:00:00',
@@ -64,7 +83,7 @@ final class DayOfMonthValidatorTest extends TestCase
 
     public function testDecrementsDate(): void
     {
-        $f = new DayOfMonthValidator();
+        $f = new DayOfMonthField('*');
         $date = '2011-03-15 11:15:00';
         self::assertSame(
             '2011-03-14 23:59:00',
@@ -72,9 +91,22 @@ final class DayOfMonthValidatorTest extends TestCase
         );
     }
 
-    public function testDoesNotAccept0Date(): void
+    /**
+     * @dataProvider provideFailingExpression
+     */
+    public function testDoesNotAccept0Date(string $expression): void
     {
-        $f = new DayOfMonthValidator();
-        self::assertFalse($f->isValid('0'));
+        $this->expectException(SyntaxError::class);
+
+        new DayOfMonthField($expression);
+    }
+
+    public function provideFailingExpression(): array
+    {
+        return [
+            ['0'],
+            ['5W,L'],
+            ['1.'],
+        ];
     }
 }

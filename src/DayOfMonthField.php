@@ -27,7 +27,7 @@ use DateTimeInterface;
  *
  * @author Michael Dowling <mtdowling@gmail.com>
  */
-final class DayOfMonthValidator extends FieldValidator
+final class DayOfMonthField extends Field
 {
     protected const RANGE_START = 1;
     protected const RANGE_END = 31;
@@ -70,20 +70,17 @@ final class DayOfMonthValidator extends FieldValidator
         };
     }
 
-    public function increment(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
+    public function increment(DateTimeInterface $date): DateTimeImmutable
     {
         return $this->toDateTimeImmutable($date)->setTime(0, 0)->add(new DateInterval('P1D'));
     }
 
-    public function decrement(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
+    public function decrement(DateTimeInterface $date): DateTimeImmutable
     {
         return $this->toDateTimeImmutable($date)->setTime(0, 0)->sub(new DateInterval('PT1M'));
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function isValid(string $fieldExpression): bool
+    protected function isValid(string $fieldExpression): bool
     {
         return match (true) {
             str_contains($fieldExpression, ',') && (str_contains($fieldExpression, 'W') || str_contains($fieldExpression, 'L')) => false,

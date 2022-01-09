@@ -28,19 +28,15 @@ enum ExpressionField: string
     /**
      * Returns the expression field validator.
      */
-    public function validator(): CronFieldValidator
+    public function newCronField(string $expression): CronField
     {
-        static $validators;
-
-        $validators[$this->value] ??= match ($this) {
-            self::MINUTE => new MinuteValidator(),
-            self::HOUR => new HourValidator(),
-            self::DAY_OF_MONTH => new DayOfMonthValidator(),
-            self::MONTH => new MonthValidator(),
-            default => new DayOfWeekValidator(), // self::DAY_OF_WEEK
+        return match ($this) {
+            self::MINUTE => new MinuteField($expression),
+            self::HOUR => new HourField($expression),
+            self::DAY_OF_MONTH => new DayOfMonthField($expression),
+            self::MONTH => new MonthField($expression),
+            default => new DayOfWeekField($expression), // self::DAY_OF_WEEK
         };
-
-        return $validators[$this->value];
     }
 
     /**

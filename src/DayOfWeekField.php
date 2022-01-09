@@ -22,7 +22,7 @@ use DateTimeInterface;
  * number between one and five. It allows you to specify constructs such as
  * "the second Friday" of a given month.
  */
-final class DayOfWeekValidator extends FieldValidator
+final class DayOfWeekField extends Field
 {
     protected const RANGE_START = 0;
     protected const RANGE_END = 7;
@@ -122,17 +122,17 @@ final class DayOfWeekValidator extends FieldValidator
         return [$first, $last];
     }
 
-    public function increment(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
+    public function increment(DateTimeInterface $date): DateTimeImmutable
     {
         return $this->toDateTimeImmutable($date)->setTime(0, 0)->add(new DateInterval('P1D'));
     }
 
-    public function decrement(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
+    public function decrement(DateTimeInterface $date): DateTimeImmutable
     {
         return $this->toDateTimeImmutable($date)->setTime(0, 0)->sub(new DateInterval('PT1M'));
     }
 
-    public function isValid(string $fieldExpression): bool
+    protected function isValid(string $fieldExpression): bool
     {
         return match (true) {
             parent::isValid($fieldExpression) || '?' === $fieldExpression => true,

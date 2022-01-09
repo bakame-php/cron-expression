@@ -11,7 +11,7 @@ use DateTimeInterface;
 /**
  * Month field.  Allows: * , / -.
  */
-final class MonthValidator extends FieldValidator
+final class MonthField extends Field
 {
     protected const RANGE_START = 1;
     protected const RANGE_END = 12;
@@ -36,7 +36,7 @@ final class MonthValidator extends FieldValidator
             || $this->isSatisfied((int) $date->format('m'), $this->convertLiterals($fieldExpression));
     }
 
-    public function increment(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
+    public function increment(DateTimeInterface $date): DateTimeImmutable
     {
         return  $this->toDateTimeImmutable($date)
             ->setDate((int) $date->format('Y'), (int) $date->format('n'), 1)
@@ -44,7 +44,7 @@ final class MonthValidator extends FieldValidator
             ->add(new DateInterval('P1M'));
     }
 
-    public function decrement(DateTimeInterface $date, string|null $fieldExpression = null): DateTimeImmutable
+    public function decrement(DateTimeInterface $date): DateTimeImmutable
     {
         return  $this->toDateTimeImmutable($date)
             ->setDate((int) $date->format('Y'), (int) $date->format('n'), 1)
