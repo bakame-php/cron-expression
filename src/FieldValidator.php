@@ -133,14 +133,27 @@ abstract class FieldValidator implements CronFieldValidator
             throw RangeError::dueToInvalidInput('end');
         }
 
-        // Steps larger than the range need to wrap around and be handled slightly differently than smaller steps
-        if ($step >= static::RANGE_END) {
+        return in_array($dateValue, $this->activeRanges($rangeStart, $rangeEnd, $step), true);
+    }
+
+    /**
+     * Steps larger than the range need to wrap around and be handled slightly differently than smaller steps.
+     *
+     * @return array<int>
+     */
+    protected function activeRanges(int $start, int $end, int $step): array
+    {
+        if ($step > static::RANGE_END) {
             $fullRange = $this->fullRanges();
 
-            return $dateValue === $fullRange[$step % count($fullRange)];
+            return [$fullRange[$step % count($fullRange)]];
         }
 
-        return in_array($dateValue, range($rangeStart, $rangeEnd, $step), true);
+        if ($step > ($end - $start)) {
+            return [$start];
+        }
+
+        return range($start, $end, $step);
     }
 
     protected function convertLiterals(string $value): string
@@ -197,15 +210,7 @@ abstract class FieldValidator implements CronFieldValidator
             [$offset, $to] = explode('-', (string) $range, 2) + [1 => $max];
         }
 
-        $step = (int) $step;
-        $offset = $offset === '*' ? 0 : $offset;
-        if ($step >= static::RANGE_END) {
-            $fullRange = $this->fullRanges();
-
-            return [$fullRange[$step % count($fullRange)]];
-        }
-
-        return range((int) $offset, (int) $to, $step);
+        return $this->activeRanges((int) $offset, (int) $to, (int) $step);
     }
 
     protected function computeTimeFieldRangeOffset(int $currentValue, array $references, bool $invert): int

@@ -10,7 +10,7 @@ All Notable changes to `cron` will be documented in this file
 
 ### Fixed
 
-- None
+- Fix wrapping aroung ranges see [#88](https://github.com/dragonmantank/cron-expression/issue/88/)
 
 ### Deprecate
 
