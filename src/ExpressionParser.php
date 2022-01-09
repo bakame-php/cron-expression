@@ -162,7 +162,7 @@ final class ExpressionParser
 
     /**
      * Returns all registered aliases as an associated array where the aliases are the key
-     * and their associated expressions are the values
+     * and their associated expressions are the values.
      *
      * @return array<string, string>
      */
