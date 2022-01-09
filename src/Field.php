@@ -7,12 +7,11 @@ namespace Bakame\Cron;
 use DateTimeImmutable;
 use DateTimeInterface;
 use JsonSerializable;
-use Stringable;
 
 /**
  * Abstract CRON expression field.
  */
-abstract class Field implements CronField, JsonSerializable, Stringable
+abstract class Field implements CronField, JsonSerializable
 {
     protected const RANGE_START = 0;
     protected const RANGE_END = 0;
@@ -20,16 +19,13 @@ abstract class Field implements CronField, JsonSerializable, Stringable
     /** Literal values we need to convert to integers. */
     protected array $literals = [];
     protected string $field;
-    abstract protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool;
 
     /**
      * @final
      */
     public function __construct(string $field)
     {
-        if (!$this->isValid($field)) {
-            throw SyntaxError::dueToInvalidExpression($field);
-        }
+        $this->validate($field);
 
         $this->field = $field;
     }
@@ -49,11 +45,6 @@ abstract class Field implements CronField, JsonSerializable, Stringable
         return $this->field;
     }
 
-    public function __toString(): string
-    {
-        return $this->toString();
-    }
-
     public function jsonSerialize(): string
     {
         return $this->toString();
@@ -70,55 +61,65 @@ abstract class Field implements CronField, JsonSerializable, Stringable
         return false;
     }
 
-    protected function isValid(string $fieldExpression): bool
+    abstract protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool;
+
+    protected function validate(string $fieldExpression): void
     {
         $fieldExpression = $this->convertLiterals($fieldExpression);
 
         // All fields allow * as a valid value
         if ('*' === $fieldExpression) {
-            return true;
+            return;
         }
 
         // Validate each chunk of a list individually
         if (str_contains($fieldExpression, ',')) {
             foreach (explode(',', $fieldExpression) as $listItem) {
-                if (!$this->isValid($listItem)) {
-                    return false;
-                }
+                $this->validate($listItem);
             }
-            return true;
+            return;
         }
 
         if (str_contains($fieldExpression, '/')) {
             [$range, $step] = explode('/', $fieldExpression);
 
-            return $this->isValid($range) && false !== filter_var($step, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $this->validate($range);
+
+            if (false === filter_var($step, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+                throw SyntaxError::dueToInvalidExpression($fieldExpression);
+            }
+
+            return;
         }
 
         if (str_contains($fieldExpression, '-')) {
             if (substr_count($fieldExpression, '-') > 1) {
-                return false;
+                throw SyntaxError::dueToInvalidExpression($fieldExpression);
             }
 
             [$first, $last] = array_map([$this, 'convertLiterals'], explode('-', $fieldExpression));
             [$first, $last] = $this->formatFieldRanges($first, $last);
             if (in_array('*', [$first, $last], true)) {
-                return false;
+                throw SyntaxError::dueToInvalidExpression($fieldExpression);
             }
 
-            if (!$this->isValid($first) || !$this->isValid($last)) {
-                return false;
+            $this->validate($first);
+            $this->validate($last);
+
+            $firstInt = filter_var($first, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+            $lastInt = filter_var($last, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+
+            if (false !== $firstInt && false !== $lastInt && ($lastInt < $firstInt)) {
+                throw SyntaxError::dueToInvalidExpression($fieldExpression);
             }
 
-            if (ctype_digit($first) && ctype_digit($last) && ((int) $last < (int) $first)) {
-                return false;
-            }
-
-            return true;
+            return;
         }
 
-        return 1 === preg_match('/^\d+$/', $fieldExpression)
-            && in_array((int) $fieldExpression, $this->fullRanges(), true);
+        if (1 !== preg_match('/^\d+$/', $fieldExpression)
+            || !in_array((int) $fieldExpression, $this->fullRanges(), true)) {
+            throw SyntaxError::dueToInvalidExpression($fieldExpression);
+        }
     }
 
     /**

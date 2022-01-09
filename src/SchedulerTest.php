@@ -107,7 +107,7 @@ final class SchedulerTest extends TestCase
     public function testDeterminesIfCronIsDue(string $expression, string|int $relativeTime, string $nextRun, bool $isDue): void
     {
         // Test next run date
-        $cron = new Expression($expression);
+        $cron = Expression::fromString($expression);
         if (is_string($relativeTime)) {
             $relativeTime = new DateTime($relativeTime);
         } else {
@@ -131,7 +131,7 @@ final class SchedulerTest extends TestCase
 
     public function testIsDueHandlesDifferentTimezones(): void
     {
-        $cron = new Expression('0 15 * * 3'); //Wednesday at 15:00
+        $cron = Expression::fromString('0 15 * * 3'); //Wednesday at 15:00
 
         $cronUTC = new Scheduler($cron, 'UTC', StartDatePresence::EXCLUDED); //Wednesday at 15:00
         $cronAms = new Scheduler($cron, 'Europe/Amsterdam', StartDatePresence::EXCLUDED); //Wednesday at 15:00
@@ -159,7 +159,7 @@ final class SchedulerTest extends TestCase
 
     public function testIsDueHandlesDifferentTimezonesAsArgument(): void
     {
-        $cron = new Expression('0 15 * * 3');
+        $cron = Expression::fromString('0 15 * * 3');
         $cronUTC = new Scheduler($cron, 'UTC', StartDatePresence::EXCLUDED); //Wednesday at 15:00
         $cronAms = new Scheduler($cron, new DateTimeZone('Europe/Amsterdam'), StartDatePresence::EXCLUDED); //Wednesday at 15:00
         $cronTok = new Scheduler($cron, new DateTimeZone('Asia/Tokyo'), StartDatePresence::EXCLUDED); //Wednesday at 15:00
@@ -187,7 +187,7 @@ final class SchedulerTest extends TestCase
         $two = $scheduler->run('now', 1);
         self::assertEquals($next, $scheduler->run($two, -1));
 
-        $cron = Scheduler::fromSystemTimezone(new Expression('* */2 * * *'));
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('* */2 * * *'));
         $next = $cron->run('now');
         $two = $cron->run('now', 1);
         self::assertEquals($next, $cron->run($two, -1));
@@ -200,7 +200,7 @@ final class SchedulerTest extends TestCase
 
     public function testProvidesMultipleRunDates(): void
     {
-        $cron = Scheduler::fromSystemTimezone(new Expression('*/2 * * * *'))->includeStartDate();
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('*/2 * * * *'))->includeStartDate();
         $result = $cron->yieldRunsForward('2008-11-09 00:00:00', 4);
 
         self::assertEquals([
@@ -216,7 +216,7 @@ final class SchedulerTest extends TestCase
         $this->expectException(SyntaxError::class);
 
         iterator_to_array(
-            Scheduler::fromSystemTimezone(new Expression('*/2 * * * *'))
+            Scheduler::fromSystemTimezone(Expression::fromString('*/2 * * * *'))
             ->yieldRunsForward('2008-11-09 00:00:00', -1)
         );
     }
@@ -226,7 +226,7 @@ final class SchedulerTest extends TestCase
         $this->expectException(SyntaxError::class);
 
         iterator_to_array(
-            Scheduler::fromSystemTimezone(new Expression('*/2 * * * *'))
+            Scheduler::fromSystemTimezone(Expression::fromString('*/2 * * * *'))
             ->yieldRunsBackward('2008-11-09 00:00:00', -1)
         );
     }
@@ -234,7 +234,7 @@ final class SchedulerTest extends TestCase
     public function testProvidesMultipleRunDatesForTheFarFuture(): void
     {
         // Fails with the default 1000 iteration limit
-        $cron = Scheduler::fromSystemTimezone(new Expression('0 0 12 1 *'))->includeStartDate();
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('0 0 12 1 *'))->includeStartDate();
 
         self::assertEquals([
             new DateTime('2016-01-12 00:00:00'),
@@ -272,7 +272,7 @@ final class SchedulerTest extends TestCase
 
     public function testSkipsCurrentDateByDefault(): void
     {
-        $cron = Scheduler::fromSystemTimezone(new Expression('* * * * *'));
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('* * * * *'));
         $current = new DateTime('now');
         $next = $cron->run($current);
         $nextPrev = $cron->run($next, -1);
@@ -281,14 +281,14 @@ final class SchedulerTest extends TestCase
 
     public function testStripsForSeconds(): void
     {
-        $cron = Scheduler::fromSystemTimezone(new Expression('* * * * *'));
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('* * * * *'));
         $current = new DateTime('2011-09-27 10:10:54');
         self::assertSame('2011-09-27 10:11:00', $cron->run($current)->format('Y-m-d H:i:s'));
     }
 
     public function testFixesPhpBugInDateIntervalMonth(): void
     {
-        $cron = Scheduler::fromSystemTimezone(new Expression('0 0 27 JAN *'));
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('0 0 27 JAN *'));
         self::assertSame('2011-01-27 00:00:00', $cron->run('2011-08-22 00:00:00', -1)->format('Y-m-d H:i:s'));
     }
 
@@ -303,17 +303,17 @@ final class SchedulerTest extends TestCase
 
     public function testIssue20(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone(new Expression('* * * * MON#1'));
+        $scheduler = Scheduler::fromSystemTimezone(Expression::fromString('* * * * MON#1'));
         self::assertTrue($scheduler->isDue(new DateTime('2014-04-07 00:00:00')));
         self::assertFalse($scheduler->isDue(new DateTime('2014-04-14 00:00:00')));
         self::assertFalse($scheduler->isDue(new DateTime('2014-04-21 00:00:00')));
 
-        $scheduler = Scheduler::fromSystemTimezone(new Expression('* * * * SAT#2'));
+        $scheduler = Scheduler::fromSystemTimezone(Expression::fromString('* * * * SAT#2'));
         self::assertFalse($scheduler->isDue(new DateTime('2014-04-05 00:00:00')));
         self::assertTrue($scheduler->isDue(new DateTime('2014-04-12 00:00:00')));
         self::assertFalse($scheduler->isDue(new DateTime('2014-04-19 00:00:00')));
 
-        $scheduler = Scheduler::fromSystemTimezone(new Expression('* * * * SUN#3'));
+        $scheduler = Scheduler::fromSystemTimezone(Expression::fromString('* * * * SUN#3'));
         self::assertFalse($scheduler->isDue(new DateTime('2014-04-13 00:00:00')));
         self::assertTrue($scheduler->isDue(new DateTime('2014-04-20 00:00:00')));
         self::assertFalse($scheduler->isDue(new DateTime('2014-04-27 00:00:00')));
@@ -323,21 +323,21 @@ final class SchedulerTest extends TestCase
     {
         $now = new DateTime();
         $strNow = $now->format(DateTime::ISO8601);
-        $cron = Scheduler::fromSystemTimezone(new Expression('0 0 * * *'));
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('0 0 * * *'));
         $cron->run($now, -1);
         self::assertSame($strNow, $now->format(DateTime::ISO8601));
     }
 
     public function testUpdateCronExpressionPartReturnsTheSameInstance(): void
     {
-        $cron = Scheduler::fromSystemTimezone(new Expression('23 0-23/2 * * *'));
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('23 0-23/2 * * *'));
 
         self::assertSame($cron, $cron->withTimezone(date_default_timezone_get()));
     }
 
     public function testUpdateCronExpressionPartReturnsADifferentInstance(): void
     {
-        $cron = Scheduler::fromSystemTimezone(new Expression('23 0-23/2 * * *'));
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('23 0-23/2 * * *'));
 
         self::assertNotEquals($cron, $cron->withTimezone('Africa/Kinshasa'));
     }
@@ -345,7 +345,7 @@ final class SchedulerTest extends TestCase
     public function testThrowsIfTheDateCanNotBeInstantiated(): void
     {
         $this->expectException(SyntaxError::class);
-        $cron = Scheduler::fromSystemTimezone(new Expression('23 0-23/2 * * *'));
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('23 0-23/2 * * *'));
         $cron->run('foobar');
     }
 
@@ -357,16 +357,16 @@ final class SchedulerTest extends TestCase
      */
     public function testDoubleZeroIsValid(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone(new Expression('00 * * * *'));
+        $scheduler = Scheduler::fromSystemTimezone(Expression::fromString('00 * * * *'));
         self::assertTrue($scheduler->isDue(new DateTime('2014-04-07 00:00:00')));
 
-        $scheduler = Scheduler::fromSystemTimezone(new Expression('01 * * * *'));
+        $scheduler = Scheduler::fromSystemTimezone(Expression::fromString('01 * * * *'));
         self::assertTrue($scheduler->isDue(new DateTime('2014-04-07 00:01:00')));
 
-        $scheduler = Scheduler::fromSystemTimezone(new Expression('* 00 * * *'));
+        $scheduler = Scheduler::fromSystemTimezone(Expression::fromString('* 00 * * *'));
         self::assertTrue($scheduler->isDue(new DateTime('2014-04-07 00:00:00')));
 
-        $scheduler = Scheduler::fromSystemTimezone(new Expression('* 01 * * *'));
+        $scheduler = Scheduler::fromSystemTimezone(Expression::fromString('* 01 * * *'));
         self::assertTrue($scheduler->isDue(new DateTime('2014-04-07 01:00:00')));
     }
 
@@ -379,7 +379,7 @@ final class SchedulerTest extends TestCase
      */
     public function testRangesWrapAroundWithLargeSteps(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone(new Expression('* * * */123 *'));
+        $scheduler = Scheduler::fromSystemTimezone(Expression::fromString('* * * */123 *'));
         self::assertTrue($scheduler->isDue(new DateTime('2014-04-07 00:00:00')));
 
         $nextRunDate = $scheduler->run(startDate: new DateTime('2014-04-07 00:00:00'));
@@ -394,7 +394,7 @@ final class SchedulerTest extends TestCase
      */
     public function testMakeDayOfWeekAnOrSometimes(): void
     {
-        $cron = Scheduler::fromSystemTimezone(new Expression('30 0 1 * 1'))->includeStartDate();
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('30 0 1 * 1'))->includeStartDate();
         $runs = $cron->yieldRunsForward(new DateTime('2019-10-10 23:20:00'), 5);
         $runs = iterator_to_array($runs, false);
         self::assertSame('2019-10-14 00:30:00', $runs[0]->format('Y-m-d H:i:s'));
@@ -442,7 +442,7 @@ final class SchedulerTest extends TestCase
 
         $includeStartDate = $initial->includeStartDate();
 
-        self::assertNotEquals($initial, $initial->withExpression(new Expression('0 5 * * *')));
+        self::assertNotEquals($initial, $initial->withExpression(Expression::fromString('0 5 * * *')));
         self::assertNotEquals($initial, $initial->withTimezone(new DateTimeZone('Africa/Dakar')));
         self::assertNotEquals($initial, $includeStartDate);
         self::assertFalse($includeStartDate->isStartDateExcluded());

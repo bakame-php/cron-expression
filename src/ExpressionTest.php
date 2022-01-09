@@ -23,7 +23,7 @@ final class ExpressionTest extends TestCase
     public function testParsesCronSchedule(): void
     {
         // '2010-09-10 12:00:00'
-        $cron = new Expression('1 2-4 * 4,5,6 */3');
+        $cron = Expression::fromString('1 2-4 * 4,5,6 */3');
         self::assertSame('1', $cron->minute()->toString());
         self::assertSame('2-4', $cron->hour()->toString());
         self::assertSame('*', $cron->dayOfMonth()->toString());
@@ -39,7 +39,7 @@ final class ExpressionTest extends TestCase
     {
         $this->expectException(SyntaxError::class);
 
-        new Expression('A 1 2 3 4');
+        Expression::fromString('A 1 2 3 4');
     }
 
     /**
@@ -47,7 +47,7 @@ final class ExpressionTest extends TestCase
      */
     public function testParsesCronScheduleWithAnySpaceCharsAsSeparators(string $schedule, array $expected): void
     {
-        $cron = new Expression($schedule);
+        $cron = Expression::fromString($schedule);
 
         self::assertSame($expected[0], $cron->minute()->toString());
         self::assertSame($expected[1], $cron->hour()->toString());
@@ -71,7 +71,7 @@ final class ExpressionTest extends TestCase
 
     public function testUpdateCronExpressionPartReturnsTheSameInstance(): void
     {
-        $cron = new Expression('23 0-23/2 * * *');
+        $cron = Expression::fromString('23 0-23/2 * * *');
 
         self::assertEquals($cron, $cron->withMinute($cron->minute()));
         self::assertEquals($cron, $cron->withHour('0-23/2'));
@@ -82,7 +82,7 @@ final class ExpressionTest extends TestCase
 
     public function testUpdateCronExpressionPartReturnsADifferentInstance(): void
     {
-        $cron = new Expression('23 0-23/2 * * *');
+        $cron = Expression::fromString('23 0-23/2 * * *');
 
         self::assertNotEquals($cron, $cron->withMinute('22'));
         self::assertNotEquals($cron, $cron->withHour('12'));
@@ -106,7 +106,7 @@ final class ExpressionTest extends TestCase
 
     public function testExpressionInternalPhpMethod(): void
     {
-        $cronOriginal = new Expression('5 4 3 2 1');
+        $cronOriginal = Expression::fromString('5 4 3 2 1');
         /** @var Expression $cron */
         $cron = eval('return '.var_export($cronOriginal, true).';');
 
@@ -118,7 +118,7 @@ final class ExpressionTest extends TestCase
      */
     public function testDoubleZeroIsValid(string $expression): void
     {
-        $obj = new Expression($expression);
+        $obj = Expression::fromString($expression);
 
         self::assertSame($expression, $obj->toString());
     }
@@ -141,7 +141,7 @@ final class ExpressionTest extends TestCase
     {
         $this->expectException(SyntaxError::class);
 
-        new Expression($expression);
+        Expression::fromString($expression);
     }
 
     public function invalidCronExpression(): array
@@ -170,7 +170,7 @@ final class ExpressionTest extends TestCase
         self::assertCount(8, Expression::aliases());
         self::assertArrayHasKey('@every', Expression::aliases());
         self::assertTrue(Expression::supportsAlias('@every'));
-        self::assertEquals(new Expression('@every'), new Expression('* * * * *'));
+        self::assertEquals(Expression::fromString('@every'), Expression::fromString('* * * * *'));
 
         Expression::unregisterAlias('@every');
 
@@ -179,7 +179,7 @@ final class ExpressionTest extends TestCase
         self::assertFalse(Expression::supportsAlias('@every'));
 
         $this->expectException(SyntaxError::class);
-        new Expression('@every');
+        Expression::fromString('@every');
     }
 
     public function testItWillFailToRegisterAnInvalidExpression(): void

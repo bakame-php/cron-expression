@@ -38,7 +38,7 @@ final class Scheduler implements CronScheduler
     private function filterExpression(CronExpression|string $expression): CronExpression
     {
         if (!$expression instanceof CronExpression) {
-            return new Expression($expression);
+            return Expression::fromString($expression);
         }
 
         return $expression;

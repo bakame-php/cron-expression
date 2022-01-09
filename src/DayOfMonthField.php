@@ -80,12 +80,27 @@ final class DayOfMonthField extends Field
         return $this->toDateTimeImmutable($date)->setTime(0, 0)->sub(new DateInterval('PT1M'));
     }
 
-    protected function isValid(string $fieldExpression): bool
+    protected function validate(string $fieldExpression): void
     {
-        return match (true) {
-            str_contains($fieldExpression, ',') && (str_contains($fieldExpression, 'W') || str_contains($fieldExpression, 'L')) => false,
-            true === parent::isValid($fieldExpression) || in_array($fieldExpression, ['?', 'L'], true) => true,
-            default => 1 === preg_match('/^(?<expression>.*)W$/', $fieldExpression, $matches) && $this->isValid($matches['expression']),
-        };
+        if (str_contains($fieldExpression, ',') && (str_contains($fieldExpression, 'W') || str_contains($fieldExpression, 'L'))) {
+            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_MONTH->value => $fieldExpression]);
+        }
+
+        if (in_array($fieldExpression, ['?', 'L'], true)) {
+            return;
+        }
+
+        try {
+            parent::validate($fieldExpression);
+
+            return;
+        } catch (CronError) {
+        }
+
+        if (1 !== preg_match('/^(?<expression>.*)W$/', $fieldExpression, $matches)) {
+            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_MONTH->value => $fieldExpression]);
+        }
+
+        $this->validate($matches['expression']);
     }
 }

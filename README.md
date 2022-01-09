@@ -63,7 +63,7 @@ require_once '/vendor/autoload.php';
 // You can define all properties on instantiation
 $expression = '0 7 * * *';
 $timezone = 'UTC';
-$scheduler1 = new Scheduler(new Expression($expression),  new DateTimeZone($timezone), StartDatePresence::INCLUDED);
+$scheduler1 = new Scheduler(Expression::fromString($expression),  new DateTimeZone($timezone), StartDatePresence::INCLUDED);
 $scheduler2 = new Scheduler($expression,  $timezone, StartDatePresence::INCLUDED);
 $scheduler3 = Scheduler::fromUTC($expression)->includeStartDate();
 
@@ -83,7 +83,7 @@ date object they will always return `DateTimeImmutable` objects with the Schedul
 The `Scheduler::isDue` method can tell whether a specific CRON is due to run on a specific date.
 
 ```php
-$scheduler = Scheduler::fromSystemTimezone(new Expression('* * * * MON#1'));
+$scheduler = Scheduler::fromSystemTimezone(Expression::fromString('* * * * MON#1'));
 $scheduler->isDue(new DateTime('2014-04-07 00:00:00')); // returns true
 $scheduler->isDue('NOW'); // returns false 
 ```
@@ -211,7 +211,7 @@ representing a CRON expression.
 
 use Bakame\Cron\Expression;
 
-$cron = new Expression('3-59/15 6-12 */15 1 2-5');
+$cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
 echo $cron->minute()->toString();     //displays '3-59/15'
 echo $cron->hour()->toString();       //displays '6-12'
 echo $cron->dayOfMonth()->toString(); //displays '*/15'
@@ -247,7 +247,7 @@ is replaced by the corresponding CRON field.
 
 use Bakame\Cron\Expression;
 
-$cron = new Expression('3-59/15 6-12 */15 1 2-5');
+$cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
 echo $cron->withMinute('2')->toString();     //displays '2 6-12 */15 1 2-5'
 echo $cron->withHour('2')->toString();       //displays '3-59/15 2 */15 1 2-5'
 echo $cron->withDayOfMonth('2')->toString(); //displays '3-59/15 6-12 2 1 2-5'
@@ -264,7 +264,7 @@ The value object implements the `JsonSerializable` and the `Stringable` interfac
 
 use Bakame\Cron\Expression;
 
-$cron = new Expression('3-59/15 6-12 */15 1 2-5');
+$cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
 echo $cron->toString();  //display '3-59/15 6-12 */15 1 2-5'
 echo $cron;              //display '3-59/15 6-12 */15 1 2-5'
 echo json_encode($cron); //display '"3-59\/15 6-12 *\/15 1 2-5"'
@@ -298,7 +298,7 @@ In case of error a `Bakame\Cron\SyntaxError` exception will be thrown if the sub
 a valid CRON expression.
 
 ```php
-new Expression('not a real CRON expression');
+Expression::fromString('not a real CRON expression');
 // throws a Bakame\Cron\SyntaxError with the following message 'Invalid CRON expression'
 // calling SyntaxError::errors method will list the errors and the fields where it occurred.
 ```
@@ -354,7 +354,7 @@ use Bakame\Cron\Expression;
 use Bakame\Cron\ExpressionParser;
 
 echo Expression::daily()->toString();         // displays "0 0 * * *"
-echo (new Expression('@DAILY'))->toString();  // displays "0 0 * * *"
+echo Expression::fromString('@DAILY')->toString();  // displays "0 0 * * *"
 ```
 
 It is possible to register more expressions via an alias name. Once registered it will be available when using the `Expression` object

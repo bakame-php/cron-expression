@@ -10,6 +10,8 @@ All Notable changes to `cron` will be documented in this file
 - `Expression::fromFields` accepts `string`, `int` and `CronField` objects.
 - `Expression::toArray` returns fields as string in an associative array.
 - **[BC Break]** `Expression::fields` returns fields as `CronField` objects.
+- **[BC Break]** `Expression::__construct` expects CRON Fields as `CronField` objects.
+- **[BC Break]** `Expression::fromString` expects a CRON Expression.
 
 ### Fixed
 

@@ -132,33 +132,46 @@ final class DayOfWeekField extends Field
         return $this->toDateTimeImmutable($date)->setTime(0, 0)->sub(new DateInterval('PT1M'));
     }
 
-    protected function isValid(string $fieldExpression): bool
+    protected function validate(string $fieldExpression): void
     {
-        return match (true) {
-            parent::isValid($fieldExpression) || '?' === $fieldExpression => true,
-            str_contains($fieldExpression, '#') => $this->handleSharpExpression($fieldExpression),
-            default => 1 === preg_match('/^(?<expression>.*)L$/', $fieldExpression, $matches) && $this->isValid($matches['expression']),
-        };
-    }
-
-    private function handleSharpExpression(string $fieldExpression): bool
-    {
-        [$weekday, $nth] = explode('#', $fieldExpression);
-        if (!is_numeric($nth)) {
-            return false;
+        if ('?' === $fieldExpression) {
+            return;
         }
 
-        $nth = (int) $nth;
+        try {
+            parent::validate($fieldExpression);
+
+            return;
+        } catch (CronError) {
+        }
+
+        if (str_contains($fieldExpression, '#')) {
+            $this->handleSharpExpression($fieldExpression);
+
+            return;
+        }
+
+        if (1 !== preg_match('/^(?<expression>.*)L$/', $fieldExpression, $matches)) {
+            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_WEEK->value => $fieldExpression]);
+        }
+
+        $this->validate($matches['expression']);
+    }
+
+    private function handleSharpExpression(string $fieldExpression): void
+    {
+        [$weekday, $nth] = explode('#', $fieldExpression);
+        if (false === filter_var($nth, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 5]])) {
+            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_WEEK->value => $fieldExpression]);
+        }
+
         // 0 and 7 are both Sunday, however 7 matches date('N') format ISO-8601
         if ($weekday === '0') {
             $weekday = '7';
         }
 
-        $weekday = (int) $this->convertLiterals($weekday);
-
-        return match (true) {
-            $weekday < 0 || $weekday > 7 => false,
-            default => in_array($nth, [1, 2, 3, 4, 5], true),
-        };
+        if (false === filter_var($this->convertLiterals($weekday), FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 7]])) {
+            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_WEEK->value => $fieldExpression]);
+        }
     }
 }
