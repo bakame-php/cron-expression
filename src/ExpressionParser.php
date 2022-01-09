@@ -127,37 +127,37 @@ final class ExpressionParser
     }
 
     /**
-     * @throws AliasError
+     * @throws ExpressionAliasError
      */
     public static function registerAlias(string $alias, string $expression): void
     {
         try {
             self::parse($expression);
         } catch (SyntaxError $exception) {
-            throw new AliasError("The expression `$expression` is invalid", 0, $exception);
+            throw ExpressionAliasError::dueToInvalidExpression($expression, $exception);
         }
 
         $alias = strtolower($alias);
 
         match (true) {
-            1 !== preg_match('/^@([a-z0-9])+$/', $alias) => throw new AliasError("The alias `$alias` is invalid. It must start with an `@` character and contain letters and numbers only."),
-            isset(self::$registeredAliases[$alias]) => throw new AliasError("The alias `$alias` is already registered."),
+            1 !== preg_match('/^@([a-z0-9])+$/', $alias) => throw ExpressionAliasError::dueToInvalidName($alias),
+            isset(self::$registeredAliases[$alias]) => throw ExpressionAliasError::dueToDuplicateEntry($alias),
             default => self::$registeredAliases[$alias] = $expression,
         };
     }
 
-    public static function unregisterAlias(string $name): void
+    public static function unregisterAlias(string $alias): void
     {
-        if (isset(self::DEFAULT_ALIASES[$name])) {
-            throw new AliasError("The alias `$name` can not be unregistered.");
+        if (isset(self::DEFAULT_ALIASES[$alias])) {
+            throw ExpressionAliasError::dueToForbiddenAliasRemoval($alias);
         }
 
-        unset(self::$registeredAliases[$name]);
+        unset(self::$registeredAliases[$alias]);
     }
 
-    public static function supportsAlias(string $name): bool
+    public static function supportsAlias(string $alias): bool
     {
-        return isset(self::$registeredAliases[$name]);
+        return isset(self::$registeredAliases[$alias]);
     }
 
     /**

@@ -90,14 +90,14 @@ final class ExpressionParserTest extends TestCase
 
     public function testItWillFailToRegisterAnInvalidExpression(): void
     {
-        $this->expectException(AliasError::class);
+        $this->expectException(ExpressionAliasError::class);
 
         ExpressionParser::registerAlias('@every', 'foobar');
     }
 
     public function testItWillFailToRegisterAnInvalidName(): void
     {
-        $this->expectException(AliasError::class);
+        $this->expectException(ExpressionAliasError::class);
 
         ExpressionParser::registerAlias('every', '* * * * *');
     }
@@ -106,13 +106,13 @@ final class ExpressionParserTest extends TestCase
     {
         ExpressionParser::registerAlias('@every', '* * * * *');
 
-        $this->expectException(AliasError::class);
+        $this->expectException(ExpressionAliasError::class);
         ExpressionParser::registerAlias('@every', '2 2 2 2 2');
     }
 
     public function testItWillFailToUnregisterADefaultExpression(): void
     {
-        $this->expectException(AliasError::class);
+        $this->expectException(ExpressionAliasError::class);
 
         ExpressionParser::unregisterAlias('@daily');
     }
