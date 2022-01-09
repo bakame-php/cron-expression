@@ -7,13 +7,17 @@ All Notable changes to `cron` will be documented in this file
 ### Added
 
 - Registration mechanism added to `Expression` to allow the package to registered expressions aliases. see [#64](https://github.com/dragonmantank/cron-expression/pull/64/)
+- `Expression::fromFields` accepts `string`, `int` and `CronField` objects.
+- `Expression::toArray` returns fields as string in an associative array.
+- **[BC Break]** `Expression::fields` returns fields as `CronField` objects.
 
 ### Fixed
 
-- Fix wrapping aroung ranges see [#88](https://github.com/dragonmantank/cron-expression/issue/88/)
+- Fix wrapping around ranges see [#88](https://github.com/dragonmantank/cron-expression/issue/88/)
 - Improve parser range validation the lower bound should always be lower or equal to the upper bound.
 - **[BC Break]** Internal rewrite CRON Fields are now value objects.
 - **[BC Break]** `Expression` field related methods no longer returns string but `CronField` object.
+- **[BC Break]** All validators are now value object for CRON field expression (ie: `CronFieldValidator` is now `CronField`)
 
 ### Deprecate
 

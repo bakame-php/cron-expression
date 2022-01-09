@@ -55,10 +55,18 @@ final class Scheduler implements CronScheduler
 
     private function initialize(): void
     {
+        static $orderedFields = [
+            ExpressionField::MONTH,
+            ExpressionField::DAY_OF_MONTH,
+            ExpressionField::DAY_OF_WEEK,
+            ExpressionField::HOUR,
+            ExpressionField::MINUTE,
+        ];
+
         // We don't have to satisfy * fields
         $this->calculatedFields = [];
         $expressionFields = $this->expression->fields();
-        foreach (ExpressionField::orderedFields() as $field) {
+        foreach ($orderedFields as $field) {
             $fieldExpression = $expressionFields[$field->value]->toString();
             if ('*' !== $fieldExpression) {
                 $this->calculatedFields[$field->value] = $expressionFields[$field->value];

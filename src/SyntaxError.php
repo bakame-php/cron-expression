@@ -76,7 +76,7 @@ final class SyntaxError extends InvalidArgumentException implements CronError
     }
 
     /**
-     * @param array<string> $fields
+     * @param array<string|int> $fields
      */
     public static function dueToInvalidBuildFields(array $fields): self
     {

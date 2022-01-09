@@ -38,14 +38,4 @@ enum ExpressionField: string
             default => new DayOfWeekField($expression), // self::DAY_OF_WEEK
         };
     }
-
-    /**
-     * Returns the Order in which to test CRON expression field.
-     *
-     * @return array<ExpressionField>
-     */
-    public static function orderedFields(): array
-    {
-        return [self::MONTH, self::DAY_OF_MONTH, self::DAY_OF_WEEK, self::HOUR, self::MINUTE];
-    }
 }
