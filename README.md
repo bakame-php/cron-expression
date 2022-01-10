@@ -25,11 +25,30 @@ You need **PHP >= 8.1** but the latest stable version of PHP is recommended.
 
 ## Installing
 
+### Using composer
+
 Add the dependency to your project:
 
 ```bash
 composer require bakame-php/cron
 ```
+
+### Going solo
+
+You can also use `Bakame\Cron` without using Composer by downloading the library and:
+
+- using any other [PSR-4](http://www.php-fig.org/psr/psr-4/) compatible autoloader.
+- using the bundle autoloader script as shown below:
+
+~~~php
+require 'path/to/bakame/cron/repo/autoload.php';
+
+use Bakame\Cron\Expression;
+
+Expression::daily()->toString(); //display '0 0 * * *'
+~~~
+
+where `path/to/bakame/cron/repo` represents the path where the library was extracted.
 
 ## Usage
 
