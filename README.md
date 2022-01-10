@@ -68,7 +68,7 @@ To ease instantiating the `Scheduler`, it comes bundle with two named constructo
 - `Scheduler::fromUTC`: instantiate a scheduler using the `UTC` timezone.
 - `Scheduler::fromSystemTimezone`: instantiate a scheduler using the underlying system timezone
 
-**Both the named constructors exclude by default the start date from the results.**
+**Both named constructors exclude by default the start date from the results.**
 
 ```php
 <?php
@@ -84,7 +84,7 @@ $expression = '0 7 * * *';
 $timezone = 'UTC';
 $scheduler1 = new Scheduler(Expression::fromString($expression), new DateTimeZone($timezone), StartDatePresence::INCLUDED);
 $scheduler2 = new Scheduler($expression, $timezone, StartDatePresence::INCLUDED);
-$scheduler3 = Scheduler::fromUTC($expression)->includeStartDate();
+$scheduler3 = Scheduler::fromUTC($expression, StartDatePresence::INCLUDED);
 
 //all these instantiated object are equals.
 ```
@@ -334,6 +334,37 @@ Validation of a specific CRON expression field can be done using a `CronField` i
 use Bakame\Cron\MonthField;
 $field = new MonthField('JAN'); //!works
 $field = new MonthField(23);    //will throw a SyntaxError
+```
+
+The package contains the following CRON Fiel expression value object
+
+- `MinuteField`
+- `HourField`
+- `DayOfMonthField`
+- `MonthField`
+- `DayOfWeekField`
+
+It is possible to use those CRON Field expression value object to instantiate an `Expression` instance:
+
+```php
+<?php
+use Bakame\Cron\Expression;
+use Bakame\Cron\MonthField;
+
+$expression = new Expression(
+    new MinuteField('3-59/15'),
+    new HourField('6-12'),
+    new DayOfMonthField('*/15'),
+    new MonthField('1'),
+    new DayOfWeekField('2-5'),
+);
+$expression->toString(); // display 3-59/15 6-12 */15 1 2-5
+
+// At every 15th minute from 3 through 59 past 
+// every hour from 6 through 12
+// on every 15th day-of-month
+// if it's on every day-of-week from Tuesday through Friday
+// in January.
 ```
 
 It is also possible to validate a date against a specific field expression using a `CronField` object.

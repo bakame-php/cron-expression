@@ -79,14 +79,14 @@ final class Scheduler implements CronScheduler
         );
     }
 
-    public static function fromUTC(Expression|string $expression): self
+    public static function fromUTC(Expression|string $expression, StartDatePresence $startDatePresence = StartDatePresence::EXCLUDED): self
     {
-        return new self($expression, new DateTimeZone('UTC'), StartDatePresence::EXCLUDED);
+        return new self($expression, new DateTimeZone('UTC'), $startDatePresence);
     }
 
-    public static function fromSystemTimezone(Expression|string $expression): self
+    public static function fromSystemTimezone(Expression|string $expression, StartDatePresence $startDatePresence = StartDatePresence::EXCLUDED): self
     {
-        return new self($expression, new DateTimeZone(date_default_timezone_get()), StartDatePresence::EXCLUDED);
+        return new self($expression, new DateTimeZone(date_default_timezone_get()), $startDatePresence);
     }
 
     public function expression(): Expression

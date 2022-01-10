@@ -69,8 +69,8 @@ abstract class Field implements CronField, JsonSerializable
 
         match (true) {
             '*' === $fieldExpression => null,
-            str_contains($fieldExpression, ',') => $this->validateChuncks($fieldExpression),
-            str_contains($fieldExpression, '/') => $this->validateStep($fieldExpression),
+            str_contains($fieldExpression, ',') => $this->validateAllowedValues($fieldExpression),
+            str_contains($fieldExpression, '/') => $this->validateIncrement($fieldExpression),
             str_contains($fieldExpression, '-') => $this->validateRange($fieldExpression),
             default => $this->validateDate($fieldExpression),
         };
@@ -241,7 +241,7 @@ abstract class Field implements CronField, JsonSerializable
     }
 
 
-    protected function validateChuncks(string $fieldExpression): void
+    protected function validateAllowedValues(string $fieldExpression): void
     {
         foreach (explode(',', $fieldExpression) as $listItem) {
             $this->wrapValidate($listItem, $fieldExpression);
@@ -249,7 +249,7 @@ abstract class Field implements CronField, JsonSerializable
     }
 
 
-    protected function validateStep(string $fieldExpression): void
+    protected function validateIncrement(string $fieldExpression): void
     {
         [$range, $step] = explode('/', $fieldExpression);
 
