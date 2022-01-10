@@ -30,7 +30,7 @@ final class ExpressionTest extends TestCase
         self::assertSame('4,5,6', $cron->month()->toString());
         self::assertSame('*/3', $cron->dayOfWeek()->toString());
         self::assertSame('1 2-4 * 4,5,6 */3', $cron->toString());
-        self::assertSame('1 2-4 * 4,5,6 */3', (string) $cron);
+        self::assertSame('1 2-4 * 4,5,6 */3', $cron->toString());
         self::assertSame(['1', '2-4', '*', '4,5,6', '*/3'], array_values(array_map(fn (CronField $f): string => $f->toString(), $cron->fields())));
         self::assertSame('"1 2-4 * 4,5,6 *\/3"', json_encode($cron));
     }
@@ -196,12 +196,19 @@ final class ExpressionTest extends TestCase
         Expression::registerAlias('every', '* * * * *');
     }
 
+    public function testItWillFailToRegisterAnInvalidName2(): void
+    {
+        $this->expectException(ExpressionAliasError::class);
+
+        Expression::registerAlias('@évery', '* * * * *');
+    }
+
     public function testItWillFailToRegisterAValidNameTwice(): void
     {
-        Expression::registerAlias('@EveRy', '* * * * *');
+        Expression::registerAlias('@Ev_eR_y', '* * * * *');
 
         $this->expectException(ExpressionAliasError::class);
-        Expression::registerAlias('@every', '2 2 2 2 2');
+        Expression::registerAlias('@eV_Er_Y', '2 2 2 2 2');
     }
 
     public function testItWillFailToUnregisterADefaultExpression(): void

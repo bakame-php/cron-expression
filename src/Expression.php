@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Bakame\Cron;
 
 use JsonSerializable;
-use Stringable;
 
-final class Expression implements CronExpression, JsonSerializable, Stringable
+final class Expression implements CronExpression, JsonSerializable
 {
     /**
      * Predefined aliases which can be used to substitute the CRON expression:.
@@ -44,7 +43,7 @@ final class Expression implements CronExpression, JsonSerializable, Stringable
         $alias = strtolower($alias);
 
         match (true) {
-            1 !== preg_match('/^@([a-z0-9])+$/', $alias) => throw ExpressionAliasError::dueToInvalidName($alias),
+            1 !== preg_match('/^@\w+$/', $alias) => throw ExpressionAliasError::dueToInvalidName($alias),
             isset(self::$registeredAliases[$alias]) => throw ExpressionAliasError::dueToDuplicateEntry($alias),
             default => self::$registeredAliases[$alias] = $expression,
         };
@@ -100,7 +99,7 @@ final class Expression implements CronExpression, JsonSerializable, Stringable
         $expression = self::$registeredAliases[strtolower($expression)] ?? $expression;
         /** @var array<int, string> $fields */
         $fields = preg_split('/\s/', $expression, -1, PREG_SPLIT_NO_EMPTY);
-        if (count($fields) !== 5) {
+        if (5 !== count($fields)) {
             throw SyntaxError::dueToInvalidExpression($expression);
         }
 
@@ -134,17 +133,17 @@ final class Expression implements CronExpression, JsonSerializable, Stringable
         }
 
         $fields = array_map(
-            fn (CronField|string|int $f): string => $f instanceof CronField ? $f->toString() : (string) $f,
+            fn (CronField|string|int $field): string => $field instanceof CronField ? $field->toString() : (string) $field,
             $fields + $defaultValues
         );
 
-        return self::fromString(implode(' ', [
-            $fields[ExpressionField::MINUTE->value],
-            $fields[ExpressionField::HOUR->value],
-            $fields[ExpressionField::DAY_OF_MONTH->value],
-            $fields[ExpressionField::MONTH->value],
-            $fields[ExpressionField::DAY_OF_WEEK->value],
-        ]));
+        return new self(
+            new MinuteField($fields[ExpressionField::MINUTE->value]),
+            new HourField($fields[ExpressionField::HOUR->value]),
+            new DayOfMonthField($fields[ExpressionField::DAY_OF_MONTH->value]),
+            new MonthField($fields[ExpressionField::MONTH->value]),
+            new DayOfWeekField($fields[ExpressionField::DAY_OF_WEEK->value]),
+        );
     }
 
     /**
@@ -223,27 +222,22 @@ final class Expression implements CronExpression, JsonSerializable, Stringable
         return $this->dayOfWeek;
     }
 
-    public function toString(): string
-    {
-        return implode(' ', $this->toArray());
-    }
-
-    public function __toString(): string
-    {
-        return $this->toString();
-    }
-
-    public function jsonSerialize(): string
-    {
-        return $this->toString();
-    }
-
     /**
      * @return array<string>
      */
     public function toArray(): array
     {
         return array_map(fn (CronField $f): string => $f->toString(), $this->fields());
+    }
+
+    public function toString(): string
+    {
+        return implode(' ', $this->toArray());
+    }
+
+    public function jsonSerialize(): string
+    {
+        return $this->toString();
     }
 
     public function withMinute(CronField|string $fieldExpression): self
