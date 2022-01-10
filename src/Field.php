@@ -67,58 +67,13 @@ abstract class Field implements CronField, JsonSerializable
     {
         $fieldExpression = $this->convertLiterals($fieldExpression);
 
-        // All fields allow * as a valid value
-        if ('*' === $fieldExpression) {
-            return;
-        }
-
-        // Validate each chunk of a list individually
-        if (str_contains($fieldExpression, ',')) {
-            foreach (explode(',', $fieldExpression) as $listItem) {
-                $this->wrapValidate($listItem, $fieldExpression);
-            }
-            return;
-        }
-
-        if (str_contains($fieldExpression, '/')) {
-            [$range, $step] = explode('/', $fieldExpression);
-
-            $this->wrapValidate($range, $fieldExpression);
-
-            if (false === filter_var($step, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
-            }
-
-            return;
-        }
-
-        if (str_contains($fieldExpression, '-')) {
-            if (substr_count($fieldExpression, '-') > 1) {
-                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
-            }
-
-            [$first, $last] = $this->formatFieldRanges($fieldExpression);
-            if (in_array('*', [$first, $last], true)) {
-                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
-            }
-
-            $this->wrapValidate($first, $fieldExpression);
-            $this->wrapValidate($last, $fieldExpression);
-
-            $firstInt = filter_var($first, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
-            $lastInt = filter_var($last, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
-
-            if (false !== $firstInt && false !== $lastInt && ($lastInt < $firstInt)) {
-                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
-            }
-
-            return;
-        }
-
-        if (1 !== preg_match('/^\d+$/', $fieldExpression)
-            || !in_array((int) $fieldExpression, $this->fullRanges(), true)) {
-            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
-        }
+        match (true) {
+            '*' === $fieldExpression => null,
+            str_contains($fieldExpression, ',') => $this->validateChuncks($fieldExpression),
+            str_contains($fieldExpression, '/') => $this->validateSteppedRange($fieldExpression),
+            str_contains($fieldExpression, '-') => $this->validateRange($fieldExpression),
+            default => $this->validateDate($fieldExpression),
+        };
     }
 
     final protected function wrapValidate(string $expression, string $sourceExpression): void
@@ -203,7 +158,7 @@ abstract class Field implements CronField, JsonSerializable
         }
 
         if ($step > ($end - $start)) {
-            return [$start];
+            throw SyntaxError::dueToInvalidStep();
         }
 
         return range($start, $end, $step);
@@ -243,14 +198,6 @@ abstract class Field implements CronField, JsonSerializable
     protected function getRangeValuesFromExpression(string $expression, int $max): array
     {
         $expression = $this->convertLiterals($expression);
-        if (str_contains($expression, ',')) {
-            return array_reduce(
-                explode(',', $expression),
-                fn (array $values, string $range): array => array_merge($values, $this->getRangeValuesFromExpression($range, static::RANGE_END)),
-                []
-            );
-        }
-
         if (!str_contains($expression, '-') && !str_contains($expression, '/')) {
             return [(int) $expression];
         }
@@ -291,5 +238,63 @@ abstract class Field implements CronField, JsonSerializable
         }
 
         return $date;
+    }
+
+
+    protected function validateChuncks(string $fieldExpression): void
+    {
+        foreach (explode(',', $fieldExpression) as $listItem) {
+            $this->wrapValidate($listItem, $fieldExpression);
+        }
+    }
+
+
+    protected function validateSteppedRange(string $fieldExpression): void
+    {
+        [$range, $step] = explode('/', $fieldExpression);
+
+        $this->wrapValidate($range, $fieldExpression);
+
+        if (false === filter_var($step, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
+        }
+
+        try {
+            $this->isInIncrementsOfRanges(0, $fieldExpression);
+        } catch (SyntaxError $exception) {
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class, $exception);
+        }
+    }
+
+
+    protected function validateRange(string $fieldExpression): void
+    {
+        if (substr_count($fieldExpression, '-') > 1) {
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
+        }
+
+        [$first, $last] = $this->formatFieldRanges($fieldExpression);
+        if (in_array('*', [$first, $last], true)) {
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
+        }
+
+        $this->wrapValidate($first, $fieldExpression);
+        $this->wrapValidate($last, $fieldExpression);
+
+        $firstInt = filter_var($first, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        $lastInt = filter_var($last, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+
+        if (false !== $firstInt && false !== $lastInt && ($lastInt < $firstInt)) {
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
+        }
+    }
+
+
+    protected function validateDate(string $fieldExpression): void
+    {
+        if (1 !== preg_match('/^\d+$/', $fieldExpression)
+            || !in_array((int)$fieldExpression, $this->fullRanges(), true)) {
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
+        }
     }
 }

@@ -16,11 +16,12 @@ final class HourFieldTest extends TestCase
     /**
      * @dataProvider validFieldExpression
      */
-    public function testValidatesField(string $expression): void
+    public function testValidatesField(string $expression, string $json): void
     {
         $f = new HourField($expression);
 
         self::assertSame($expression, $f->toString());
+        self::assertSame($json, json_encode($f));
     }
 
     /**
@@ -29,10 +30,10 @@ final class HourFieldTest extends TestCase
     public function validFieldExpression(): array
     {
         return [
-            ['1'],
-            ['*'],
-            ['*/3,1,1-12'],
-            ['5-7,11-13'],
+            ['1', '"1"'],
+            ['*', '"*"'],
+            ['*/3,1,1-12', '"*\/3,1,1-12"'],
+            ['5-7,11-13', '"5-7,11-13"'],
         ];
     }
 
