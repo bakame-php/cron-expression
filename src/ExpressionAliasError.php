@@ -9,7 +9,7 @@ final class ExpressionAliasError extends LogicException implements CronError
 {
     public static function dueToInvalidName(string $alias): self
     {
-        return new self("The alias `$alias` is invalid. It must start with an `@` character and contain letters and numbers only.");
+        return new self("The alias `$alias` is invalid. It must start with an `@` character and contain alphanumeric (letters, numbers, regardless of case) plus underscore (_).");
     }
 
     public static function dueToDuplicateEntry(string $alias): self
