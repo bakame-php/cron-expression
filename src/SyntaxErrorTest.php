@@ -10,11 +10,9 @@ class SyntaxErrorTest extends TestCase
 {
     public function testItReturnsErrorInformations(): void
     {
-        $exception = SyntaxError::dueToInvalidFieldExpression([
-            'foo' => 'bar',
-        ]);
+        $exception = SyntaxError::dueToInvalidFieldExpression('foo', 'bar');
 
-        self::assertSame(['foo' => 'Invalid or unsupported value `bar`.'], $exception->errors());
+        self::assertSame('Invalid or Unsupported CRON field expression value `foo` according to `bar`.', $exception->getMessage());
     }
 
     public function testItCanHandleWrongDateIntervalWithWrongStringFormat(): void

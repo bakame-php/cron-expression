@@ -607,7 +607,7 @@ final class SchedulerTest extends TestCase
 
     public function testItWillFailWithYieldingRunsBeforeWithInvalidInterval(): void
     {
-        $this->expectWarning();
+        $this->expectException(SyntaxError::class);
 
         iterator_to_array(
             Scheduler::fromSystemTimezone('* * * * *')->yieldRunsBefore('now', 'foobar')
@@ -625,7 +625,7 @@ final class SchedulerTest extends TestCase
 
     public function testItWillFailWithYieldingRunsAfterWithInvalidInterval(): void
     {
-        $this->expectWarning();
+        $this->expectException(SyntaxError::class);
 
         iterator_to_array(
             Scheduler::fromSystemTimezone('* * * * *')->yieldRunsAfter('now', 'foobar')

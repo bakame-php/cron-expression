@@ -83,7 +83,7 @@ final class DayOfMonthField extends Field
     protected function validate(string $fieldExpression): void
     {
         if (str_contains($fieldExpression, ',') && (str_contains($fieldExpression, 'W') || str_contains($fieldExpression, 'L'))) {
-            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_MONTH->value => $fieldExpression]);
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }
 
         if (in_array($fieldExpression, ['?', 'L'], true)) {
@@ -98,9 +98,9 @@ final class DayOfMonthField extends Field
         }
 
         if (1 !== preg_match('/^(?<expression>.*)W$/', $fieldExpression, $matches)) {
-            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_MONTH->value => $fieldExpression]);
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }
 
-        $this->validate($matches['expression']);
+        $this->wrapValidate($matches['expression'], $fieldExpression);
     }
 }

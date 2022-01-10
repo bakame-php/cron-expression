@@ -152,17 +152,17 @@ final class DayOfWeekField extends Field
         }
 
         if (1 !== preg_match('/^(?<expression>.*)L$/', $fieldExpression, $matches)) {
-            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_WEEK->value => $fieldExpression]);
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }
 
-        $this->validate($matches['expression']);
+        $this->wrapValidate($matches['expression'], $fieldExpression);
     }
 
     private function handleSharpExpression(string $fieldExpression): void
     {
         [$weekday, $nth] = explode('#', $fieldExpression);
         if (false === filter_var($nth, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 5]])) {
-            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_WEEK->value => $fieldExpression]);
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }
 
         // 0 and 7 are both Sunday, however 7 matches date('N') format ISO-8601
@@ -171,7 +171,7 @@ final class DayOfWeekField extends Field
         }
 
         if (false === filter_var($this->convertLiterals($weekday), FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 7]])) {
-            throw SyntaxError::dueToInvalidFieldExpression([ExpressionField::DAY_OF_WEEK->value => $fieldExpression]);
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }
     }
 }

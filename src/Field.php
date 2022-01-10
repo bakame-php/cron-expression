@@ -75,7 +75,7 @@ abstract class Field implements CronField, JsonSerializable
         // Validate each chunk of a list individually
         if (str_contains($fieldExpression, ',')) {
             foreach (explode(',', $fieldExpression) as $listItem) {
-                $this->validate($listItem);
+                $this->wrapValidate($listItem, $fieldExpression);
             }
             return;
         }
@@ -83,10 +83,10 @@ abstract class Field implements CronField, JsonSerializable
         if (str_contains($fieldExpression, '/')) {
             [$range, $step] = explode('/', $fieldExpression);
 
-            $this->validate($range);
+            $this->wrapValidate($range, $fieldExpression);
 
             if (false === filter_var($step, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-                throw SyntaxError::dueToInvalidExpression($fieldExpression);
+                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
             }
 
             return;
@@ -94,23 +94,23 @@ abstract class Field implements CronField, JsonSerializable
 
         if (str_contains($fieldExpression, '-')) {
             if (substr_count($fieldExpression, '-') > 1) {
-                throw SyntaxError::dueToInvalidExpression($fieldExpression);
+                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
             }
 
             [$first, $last] = array_map([$this, 'convertLiterals'], explode('-', $fieldExpression));
             [$first, $last] = $this->formatFieldRanges($first, $last);
             if (in_array('*', [$first, $last], true)) {
-                throw SyntaxError::dueToInvalidExpression($fieldExpression);
+                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
             }
 
-            $this->validate($first);
-            $this->validate($last);
+            $this->wrapValidate($first, $fieldExpression);
+            $this->wrapValidate($last, $fieldExpression);
 
             $firstInt = filter_var($first, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
             $lastInt = filter_var($last, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
 
             if (false !== $firstInt && false !== $lastInt && ($lastInt < $firstInt)) {
-                throw SyntaxError::dueToInvalidExpression($fieldExpression);
+                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
             }
 
             return;
@@ -118,7 +118,16 @@ abstract class Field implements CronField, JsonSerializable
 
         if (1 !== preg_match('/^\d+$/', $fieldExpression)
             || !in_array((int) $fieldExpression, $this->fullRanges(), true)) {
-            throw SyntaxError::dueToInvalidExpression($fieldExpression);
+            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
+        }
+    }
+
+    final protected function wrapValidate(string $expression, string $sourceExpression): void
+    {
+        try {
+            $this->validate($expression);
+        } catch (SyntaxError $exception) {
+            throw SyntaxError::dueToInvalidFieldExpression($sourceExpression, $this::class, $exception);
         }
     }
 

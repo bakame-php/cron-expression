@@ -169,12 +169,12 @@ final class Scheduler implements CronScheduler
 
     public function yieldRunsForward(DateTimeInterface|string $startDate, int $recurrences): Generator
     {
-        return $this->runsFrom($startDate, $recurrences, self::FORWARD);
+        return $this->runsFrom($this->toDateTimeImmutable($startDate), $recurrences, self::FORWARD);
     }
 
     public function yieldRunsBackward(DateTimeInterface|string $endDate, int $recurrences): Generator
     {
-        return $this->runsFrom($endDate, $recurrences, self::BACKWARD);
+        return $this->runsFrom($this->toDateTimeImmutable($endDate), $recurrences, self::BACKWARD);
     }
 
     public function yieldRunsAfter(DateTimeInterface|string $startDate, DateInterval|string $interval): Generator
@@ -231,24 +231,26 @@ final class Scheduler implements CronScheduler
             return $interval;
         }
 
+        set_error_handler(fn (int $errno, string $errstr): bool => true);
         if (false === ($res = DateInterval::createFromDateString($interval))) {
             throw SyntaxError::dueToInvalidDateIntervalString($interval);
         }
+        restore_error_handler();
 
         return $res;
     }
 
     /**
-     * @throws SyntaxError
+     * @throws CronError
      */
-    private function runsFrom(DateTimeInterface|string $startDate, int $recurrences, int $direction): Generator
+    private function runsFrom(DateTimeImmutable $startDate, int $recurrences, int $direction): Generator
     {
         if (0 > $recurrences) {
             throw SyntaxError::dueToNegativeRecurrences();
         }
 
         $i = 0;
-        $run = $this->toDateTimeImmutable($startDate);
+        $run = $startDate;
         $startDatePresence = $this->startDatePresence;
         $modifier = match ($direction) {
             self::BACKWARD => $this->expression->minute()->decrement(...),
@@ -264,12 +266,12 @@ final class Scheduler implements CronScheduler
     }
 
     /**
-     * @throws SyntaxError
+     * @throws CronError
      */
     private function runsAfter(DateTimeImmutable $startDate, DateTimeImmutable $endDate): Generator
     {
         if ($endDate < $startDate) {
-            throw SyntaxError::dueToIntervalStartDate();
+            throw SyntaxError::dueToInvalidStartDate();
         }
 
         $startDatePresence = $this->startDatePresence;
@@ -293,7 +295,7 @@ final class Scheduler implements CronScheduler
     private function runsBefore(DateTimeImmutable $endDate, DateTimeImmutable $startDate): Generator
     {
         if ($endDate < $startDate) {
-            throw SyntaxError::dueToIntervalEndDate();
+            throw SyntaxError::dueToInvalidEndDate();
         }
 
         $startDatePresence = $this->startDatePresence;
@@ -313,6 +315,8 @@ final class Scheduler implements CronScheduler
 
     /**
      * Get the next run date of the expression relative to a date.
+     *
+     * @throws CronError
      */
     private function nextRun(DateTimeImmutable $date, StartDatePresence $startDatePresence, int $direction): DateTimeImmutable
     {
@@ -339,13 +343,17 @@ final class Scheduler implements CronScheduler
             }
 
             if ($startDatePresence === StartDatePresence::INCLUDED || $nextRun !== $date) {
-                return $nextRun;
+                break;
             }
         } while ($nextRun = $modifier($nextRun));
+
+        return $nextRun;
     }
 
     /**
      * Get the next run date of an expression containing a Day Of Week AND a Day of Month field relative to a date.
+     *
+     * @throws CronError
      */
     private function dayOfWeekAndDayOfMonthNextRun(DateTimeImmutable $startDate, int $direction): DateTimeImmutable
     {

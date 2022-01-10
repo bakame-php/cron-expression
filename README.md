@@ -94,8 +94,8 @@ The `Scheduler::run` method allows finding the following run date according to a
 
 ```php
 $scheduler = new Scheduler('@daily', 'Africa/Kigali', StartDatePresence::EXCLUDED);
-$run = $scheduler->run(new Carbon\CarbonImmutable('now'))->format('Y-m-d H:i:s, e'), PHP_EOL;
-echo $run, PHP_EOL;
+$run = $scheduler->run(new Carbon\CarbonImmutable('now'));
+echo $run->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2021-12-29 00:00:00, Africa/Kigali
 echo $run::class;
 //display Carbon\CarbonImmutable
@@ -212,6 +212,7 @@ representing a CRON expression.
 use Bakame\Cron\Expression;
 
 $cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
+echo $cron->toString();               //displays '33-59/15 6-12 */15 1 2-5'
 echo $cron->minute()->toString();     //displays '3-59/15'
 echo $cron->hour()->toString();       //displays '6-12'
 echo $cron->dayOfMonth()->toString(); //displays '*/15'
@@ -227,6 +228,7 @@ It is possible to also use an associative array using the same index as the one 
 use Bakame\Cron\Expression;
 
 $cron = Expression::fromFields(['minute' => 7, 'dayOfWeek' => '5']);
+echo $cron->toString();               //displays '7 * * * 5'
 echo $cron->minute()->toString();     //displays '7'
 echo $cron->hour()->toString();       //displays '*'
 echo $cron->dayOfMonth()->toString(); //displays '*'
@@ -257,7 +259,7 @@ echo $cron->withDayOfWeek('2')->toString();  //displays '3-59/15 6-12 */15 1 2'
 
 #### Formatting the object
 
-The value object implements the `JsonSerializable` and the `Stringable` interfaces to ease interoperability.
+The value object implements the `JsonSerializable` interface to ease interoperability.
 
 ```php
 <?php
@@ -266,7 +268,6 @@ use Bakame\Cron\Expression;
 
 $cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
 echo $cron->toString();  //display '3-59/15 6-12 */15 1 2-5'
-echo $cron;              //display '3-59/15 6-12 */15 1 2-5'
 echo json_encode($cron); //display '"3-59\/15 6-12 *\/15 1 2-5"'
 ```
 
@@ -294,21 +295,17 @@ The package also supports the following notation:
 - range, split notations as well as the **?** character;
 
 
-In case of error a `Bakame\Cron\SyntaxError` exception will be thrown if the submitted string is not 
+### Validating a CRON Expression
+
+By instantiating an `Expression` object you are validating its associated CRON Expression.
+
+In case of error a `Bakame\Cron\SyntaxError` exception will be thrown if the submitted string is not
 a valid CRON expression.
 
 ```php
 Expression::fromString('not a real CRON expression');
 // throws a Bakame\Cron\SyntaxError with the following message 'Invalid CRON expression'
 // calling SyntaxError::errors method will list the errors and the fields where it occurred.
-```
-
-### Validating a CRON Expression
-
-By instantiating an `Expression` object you are validating its associated CRON Expression.
-
-```php
-new ExpressionParser('not a real CRON expression'); // will throw a SyntaxError
 ```
 
 Validation of a specific CRON expression field can be done using a `CronField` implementing object:
@@ -333,7 +330,8 @@ $field->isSatisfiedBy(new DateTime('2014-04-07 00:00:00')); // returns true
 
 ### Registering CRON Expression Aliases
 
-The `Expression` class is able to handle all default aliases for CRON expression except one. 
+The `Expression` class handles by default the following aliases for CRON expression except `@reboot`.
+
 You have them also exposed as named constructors.
 
 | Alias       | meaning              | Expression constructor | Expression shortcut     |

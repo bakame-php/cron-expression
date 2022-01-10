@@ -8,26 +8,9 @@ use Throwable;
 
 final class SyntaxError extends InvalidArgumentException implements CronError
 {
-    /** @var array<string, string> */
-    private array $errors;
-
-    private function __construct(string $message, array $errors = [], Throwable|null $previous = null)
+    private function __construct(string $message, Throwable|null $previous = null)
     {
         parent::__construct($message, 0, $previous);
-        $this->errors = $errors;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function errors(): array
-    {
-        return $this->errors;
-    }
-
-    public static function dueToInvalidPosition(string|int $position): self
-    {
-        return new self('`'.((int) $position + 1).'` is not a valid CRON expression position.');
     }
 
     public static function dueToInvalidExpression(string $expression): self
@@ -35,15 +18,9 @@ final class SyntaxError extends InvalidArgumentException implements CronError
         return new self("`$expression` is not a valid or a supported CRON expression.");
     }
 
-    /**
-     * @param array<string> $errors
-     */
-    public static function dueToInvalidFieldExpression(array $errors): self
+    public static function dueToInvalidFieldExpression(string $fieldExpression, string $className, Throwable $throwable = null): self
     {
-        $exception = new self('Invalid CRON expression value');
-        $exception->errors = array_map(fn (string $fieldExpression): string => 'Invalid or unsupported value `'.$fieldExpression.'`.', $errors);
-
-        return $exception;
+        return new self("Invalid or Unsupported CRON field expression value `$fieldExpression` according to `$className`.", $throwable);
     }
 
     public static function dueToInvalidDateString(DateTimeInterface|string $date, Throwable $exception): self
@@ -52,7 +29,7 @@ final class SyntaxError extends InvalidArgumentException implements CronError
             $date = $date->format('c');
         }
 
-        return new self("The string `$date` is not a valid `DateTimeImmutable:::__construct` input.", [], $exception);
+        return new self("The string `$date` is not a valid `DateTimeImmutable:::__construct` input.", $exception);
     }
 
     public static function dueToInvalidDateIntervalString(string $interval): self
@@ -65,12 +42,12 @@ final class SyntaxError extends InvalidArgumentException implements CronError
         return new self('The recurrence MUST be an integer greater or equal to 0.');
     }
 
-    public static function dueToIntervalStartDate(): self
+    public static function dueToInvalidStartDate(): self
     {
         return new self('The start date MUST be lesser than or equal to the end date.');
     }
 
-    public static function dueToIntervalEndDate(): self
+    public static function dueToInvalidEndDate(): self
     {
         return new self('The end date MUST be greater than or equal to the start date.');
     }
