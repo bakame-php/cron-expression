@@ -12,6 +12,7 @@ All Notable changes to `cron` will be documented in this file
 - **[BC Break]** `Expression::fields` returns fields as `CronField` objects.
 - **[BC Break]** `Expression::__construct` expects CRON Fields as `CronField` objects.
 - **[BC Break]** `Expression::fromString` expects a CRON Expression.
+- **[BC Break]**  exposes CRON field via public readonly properties.
 
 ### Fixed
 
@@ -33,6 +34,7 @@ All Notable changes to `cron` will be documented in this file
 - **[BC Break]** `Expression::__toString`, The `Expression` class no longer implements the `Stringable` interface.
 - **[BC Break]** `CronExpression` interface.
 - **[BC Break]** `Expression::yearly`, `Expression::monthly`, `Expression::weekly`, `Expression::daily`, `Expression::hourly`, named constructors.
+- **[BC Break]**  Removed `Expression` CRON field getters replaced by public readonly properties.
 
 ## [0.4.0] - 2022-01-03
 

@@ -15,11 +15,11 @@ final class ExpressionTest extends TestCase
     {
         // '2010-09-10 12:00:00'
         $cron = Expression::fromString('1 2-4 * 4,5,6 */3');
-        self::assertSame('1', $cron->minute()->toString());
-        self::assertSame('2-4', $cron->hour()->toString());
-        self::assertSame('*', $cron->dayOfMonth()->toString());
-        self::assertSame('4,5,6', $cron->month()->toString());
-        self::assertSame('*/3', $cron->dayOfWeek()->toString());
+        self::assertSame('1', $cron->minute->toString());
+        self::assertSame('2-4', $cron->hour->toString());
+        self::assertSame('*', $cron->dayOfMonth->toString());
+        self::assertSame('4,5,6', $cron->month->toString());
+        self::assertSame('*/3', $cron->dayOfWeek->toString());
         self::assertSame('1 2-4 * 4,5,6 */3', $cron->toString());
         self::assertSame('1 2-4 * 4,5,6 */3', $cron->toString());
         self::assertSame(['1', '2-4', '*', '4,5,6', '*/3'], array_values(array_map(fn (CronField $f): string => $f->toString(), $cron->fields())));
@@ -40,11 +40,11 @@ final class ExpressionTest extends TestCase
     {
         $cron = Expression::fromString($schedule);
 
-        self::assertSame($expected[0], $cron->minute()->toString());
-        self::assertSame($expected[1], $cron->hour()->toString());
-        self::assertSame($expected[2], $cron->dayOfMonth()->toString());
-        self::assertSame($expected[3], $cron->month()->toString());
-        self::assertSame($expected[4], $cron->dayOfWeek()->toString());
+        self::assertSame($expected[0], $cron->minute->toString());
+        self::assertSame($expected[1], $cron->hour->toString());
+        self::assertSame($expected[2], $cron->dayOfMonth->toString());
+        self::assertSame($expected[3], $cron->month->toString());
+        self::assertSame($expected[4], $cron->dayOfWeek->toString());
     }
 
     /**
@@ -64,11 +64,11 @@ final class ExpressionTest extends TestCase
     {
         $cron = Expression::fromString('23 0-23/2 * * *');
 
-        self::assertEquals($cron, $cron->withMinute($cron->minute()));
+        self::assertEquals($cron, $cron->withMinute($cron->minute));
         self::assertEquals($cron, $cron->withHour('0-23/2'));
-        self::assertEquals($cron, $cron->withMonth($cron->month()));
+        self::assertEquals($cron, $cron->withMonth($cron->month));
         self::assertEquals($cron, $cron->withDayOfMonth('*'));
-        self::assertEquals($cron, $cron->withDayOfWeek($cron->dayOfWeek()));
+        self::assertEquals($cron, $cron->withDayOfWeek($cron->dayOfWeek));
     }
 
     public function testUpdateExpressionPartReturnsADifferentInstance(): void

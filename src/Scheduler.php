@@ -253,8 +253,8 @@ final class Scheduler implements CronScheduler
         $run = $startDate;
         $startDatePresence = $this->startDatePresence;
         $modifier = match ($direction) {
-            self::BACKWARD => $this->expression->minute()->decrement(...),
-            default => $this->expression->minute()->increment(...),
+            self::BACKWARD => $this->expression->minute->decrement(...),
+            default => $this->expression->minute->increment(...),
         };
         while ($i < $recurrences) {
             yield $this->nextRun($run, $startDatePresence, $direction);
@@ -284,7 +284,7 @@ final class Scheduler implements CronScheduler
 
             yield $run;
 
-            $startDate = $this->expression->minute()->increment($run);
+            $startDate = $this->expression->minute->increment($run);
             $startDatePresence = StartDatePresence::INCLUDED;
         }
     }
@@ -308,7 +308,7 @@ final class Scheduler implements CronScheduler
 
             yield $run;
 
-            $endDate = $this->expression->minute()->decrement($run);
+            $endDate = $this->expression->minute->decrement($run);
             $startDatePresence = StartDatePresence::INCLUDED;
         }
     }
@@ -325,8 +325,8 @@ final class Scheduler implements CronScheduler
         }
 
         $modifier = match ($direction) {
-            self::BACKWARD => $this->expression->minute()->decrement(...),
-            default => $this->expression->minute()->increment(...),
+            self::BACKWARD => $this->expression->minute->decrement(...),
+            default => $this->expression->minute->increment(...),
         };
 
         $nextRun = $date;

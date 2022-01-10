@@ -231,12 +231,12 @@ representing a CRON expression.
 use Bakame\Cron\Expression;
 
 $cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
-echo $cron->toString();               //displays '33-59/15 6-12 */15 1 2-5'
-echo $cron->minute()->toString();     //displays '3-59/15'
-echo $cron->hour()->toString();       //displays '6-12'
-echo $cron->dayOfMonth()->toString(); //displays '*/15'
-echo $cron->month()->toString();      //displays '1'
-echo $cron->dayOfWeek()->toString();  //displays '2-5'
+echo $cron->toString();             //displays '33-59/15 6-12 */15 1 2-5'
+echo $cron->minute->toString();     //displays '3-59/15'
+echo $cron->hour->toString();       //displays '6-12'
+echo $cron->dayOfMonth->toString(); //displays '*/15'
+echo $cron->month->toString();      //displays '1'
+echo $cron->dayOfWeek->toString();  //displays '2-5'
 ```
 
 It is possible to also use an associative array using the same index as the one returned by `Expression::toArray` or `Expression::fields` methods
@@ -247,12 +247,12 @@ It is possible to also use an associative array using the same index as the one 
 use Bakame\Cron\Expression;
 
 $cron = Expression::fromFields(['minute' => 7, 'dayOfWeek' => '5']);
-echo $cron->toString();               //displays '7 * * * 5'
-echo $cron->minute()->toString();     //displays '7'
-echo $cron->hour()->toString();       //displays '*'
-echo $cron->dayOfMonth()->toString(); //displays '*'
-echo $cron->month()->toString();      //displays '*'
-echo $cron->dayOfWeek()->toString();  //displays '5'
+echo $cron->toString();             //displays '7 * * * 5'
+echo $cron->minute->toString();     //displays '7'
+echo $cron->hour->toString();       //displays '*'
+echo $cron->dayOfMonth->toString(); //displays '*'
+echo $cron->month->toString();      //displays '*'
+echo $cron->dayOfWeek->toString();  //displays '5'
 ```
 
 **If a field is not provided it will be replaced by the `*` character.**
@@ -448,10 +448,12 @@ Expression::aliases();
 Expression::supportsAlias('@foobar'); //return false
 Expression::supportsAlias('@daily');  //return true
 Expression::supportsAlias('@every');  //return true
+Scheduler::fromUTC('@every');        // works!
 
 Expression::unregisterAlias('@every');
 
 Expression::supportsAlias('@every');   //return false
+Scheduler::fromUTC('@every');          //throws SyntaxError unknown or unsupported expression
 Expression::unregisterAlias('@daily'); //throws RegistrationError exception
 ````
 

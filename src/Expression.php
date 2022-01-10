@@ -75,11 +75,11 @@ final class Expression implements JsonSerializable
     }
 
     public function __construct(
-        private MinuteField $minute,
-        private HourField $hour,
-        private DayOfMonthField $dayOfMonth,
-        private MonthField $month,
-        private DayOfWeekField $dayOfWeek,
+        public readonly MinuteField $minute,
+        public readonly HourField $hour,
+        public readonly DayOfMonthField $dayOfMonth,
+        public readonly MonthField $month,
+        public readonly DayOfWeekField $dayOfWeek,
     ) {
     }
 
@@ -158,31 +158,6 @@ final class Expression implements JsonSerializable
             ExpressionField::MONTH->value => $this->month,
             ExpressionField::DAY_OF_WEEK->value => $this->dayOfWeek,
         ];
-    }
-
-    public function minute(): MinuteField
-    {
-        return $this->minute;
-    }
-
-    public function hour(): HourField
-    {
-        return $this->hour;
-    }
-
-    public function dayOfMonth(): DayOfMonthField
-    {
-        return $this->dayOfMonth;
-    }
-
-    public function month(): MonthField
-    {
-        return $this->month;
-    }
-
-    public function dayOfWeek(): DayOfWeekField
-    {
-        return $this->dayOfWeek;
     }
 
     /**
