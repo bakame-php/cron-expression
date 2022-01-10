@@ -269,11 +269,11 @@ is replaced by the corresponding CRON field.
 use Bakame\Cron\Expression;
 
 $cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
-echo $cron->withMinute('2')->toString();     //displays '2 6-12 */15 1 2-5'
-echo $cron->withHour(2)->toString();       //displays '3-59/15 2 */15 1 2-5'
-echo $cron->withDayOfMonth(2)->toString(); //displays '3-59/15 6-12 2 1 2-5'
-echo $cron->withMonth('2')->toString();      //displays '3-59/15 6-12 */15 2 2-5'
-echo $cron->withDayOfWeek(2)->toString();  //displays '3-59/15 6-12 */15 1 2'
+echo $cron->withMinute('2')->toString();        //displays '2 6-12 */15 1 2-5'
+echo $cron->withHour($cron->month)->toString(); //displays '3-59/15 1 */15 1 2-5'
+echo $cron->withDayOfMonth(2)->toString();      //displays '3-59/15 6-12 2 1 2-5'
+echo $cron->withMonth('2')->toString();         //displays '3-59/15 6-12 */15 2 2-5'
+echo $cron->withDayOfWeek(2)->toString();       //displays '3-59/15 6-12 */15 1 2'
 ```
 
 #### Formatting the object

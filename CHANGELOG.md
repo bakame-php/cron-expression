@@ -9,6 +9,7 @@ All Notable changes to `cron` will be documented in this file
 - Registration mechanism added to `Expression` to allow the package to registered expressions aliases. see [#64](https://github.com/dragonmantank/cron-expression/pull/64/)
 - `Expression::fromFields` accepts `string`, `int` and `CronField` objects.
 - `Expression::toArray` returns fields as string in an associative array.
+- `CronField` VO accepts accepts `string`, `int` as constructor value.
 - **[BC Break]** `Expression::fields` returns fields as `CronField` objects.
 - **[BC Break]** `Expression::__construct` expects CRON Fields as `CronField` objects.
 - **[BC Break]** `Expression::fromString` expects a CRON Expression.

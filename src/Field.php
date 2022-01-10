@@ -23,8 +23,9 @@ abstract class Field implements CronField, JsonSerializable
     /**
      * @final
      */
-    public function __construct(string $field)
+    public function __construct(string|int $field)
     {
+        $field = (string) $field;
         $this->validate($field);
 
         $this->field = $field;

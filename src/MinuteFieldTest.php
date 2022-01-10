@@ -16,19 +16,20 @@ final class MinuteFieldTest extends TestCase
     /**
      * @dataProvider validFieldExpression
      */
-    public function testValidatesField(string $expression): void
+    public function testValidatesField(string|int $expression): void
     {
         $f = new MinuteField($expression);
 
-        self::assertSame($expression, $f->toString());
+        self::assertSame((string) $expression, $f->toString());
     }
 
     /**
-     * @return array<array<string>>
+     * @return array<array<string|int>>
      */
     public function validFieldExpression(): array
     {
         return [
+            [1],
             ['1'],
             ['*'],
             ['*/3,1,1-12'],

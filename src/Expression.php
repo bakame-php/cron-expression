@@ -178,7 +178,7 @@ final class Expression implements JsonSerializable
         return $this->toString();
     }
 
-    public function withMinute(CronField|string $fieldExpression): self
+    public function withMinute(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
             $fieldExpression instanceof MinuteField => $fieldExpression,
@@ -193,7 +193,7 @@ final class Expression implements JsonSerializable
         return new self($fieldExpression, $this->hour, $this->dayOfMonth, $this->month, $this->dayOfWeek);
     }
 
-    public function withHour(CronField|string $fieldExpression): self
+    public function withHour(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
             $fieldExpression instanceof HourField => $fieldExpression,
@@ -208,7 +208,7 @@ final class Expression implements JsonSerializable
         return new self($this->minute, $fieldExpression, $this->dayOfMonth, $this->month, $this->dayOfWeek);
     }
 
-    public function withDayOfMonth(CronField|string $fieldExpression): self
+    public function withDayOfMonth(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
             $fieldExpression instanceof DayOfMonthField => $fieldExpression,
@@ -223,7 +223,7 @@ final class Expression implements JsonSerializable
         return new self($this->minute, $this->hour, $fieldExpression, $this->month, $this->dayOfWeek);
     }
 
-    public function withMonth(CronField|string $fieldExpression): self
+    public function withMonth(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
             $fieldExpression instanceof MonthField => $fieldExpression,
@@ -238,7 +238,7 @@ final class Expression implements JsonSerializable
         return new self($this->minute, $this->hour, $this->dayOfMonth, $fieldExpression, $this->dayOfWeek);
     }
 
-    public function withDayOfWeek(CronField|string $fieldExpression): self
+    public function withDayOfWeek(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
             $fieldExpression instanceof DayOfWeekField => $fieldExpression,
