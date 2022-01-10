@@ -94,8 +94,7 @@ final class DayOfWeekField extends Field
 
         // Handle day of the week values
         if (str_contains($fieldExpression, '-')) {
-            [$first, $last] = explode('-', $fieldExpression);
-            [$first, $last] = $this->formatFieldRanges($first, $last);
+            [$first, $last] = $this->formatFieldRanges($fieldExpression);
 
             $fieldExpression = $first.'-'.$last;
         }
@@ -109,8 +108,10 @@ final class DayOfWeekField extends Field
     /**
      * @return array<string>
      */
-    protected function formatFieldRanges(string $first, string $last): array
+    protected function formatFieldRanges(string $fieldExpression): array
     {
+        [$first, $last] = parent::formatFieldRanges($fieldExpression);
+
         if ($first === '7') {
             $first = '0';
         }

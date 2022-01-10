@@ -52,7 +52,7 @@ abstract class Field implements CronField, JsonSerializable
 
     public function isSatisfiedBy(DateTimeInterface $date): bool
     {
-        foreach (array_map('trim', explode(',', $this->field)) as $expression) {
+        foreach (array_map(trim(...), explode(',', $this->field)) as $expression) {
             if ($this->isSatisfiedExpression($expression, $date)) {
                 return true;
             }
@@ -97,8 +97,7 @@ abstract class Field implements CronField, JsonSerializable
                 throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
             }
 
-            [$first, $last] = array_map([$this, 'convertLiterals'], explode('-', $fieldExpression));
-            [$first, $last] = $this->formatFieldRanges($first, $last);
+            [$first, $last] = $this->formatFieldRanges($fieldExpression);
             if (in_array('*', [$first, $last], true)) {
                 throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
             }
@@ -134,9 +133,9 @@ abstract class Field implements CronField, JsonSerializable
     /**
      * @return array<string>
      */
-    protected function formatFieldRanges(string $first, string $last): array
+    protected function formatFieldRanges(string $fieldExpression): array
     {
-        return [$first, $last];
+        return array_map($this->convertLiterals(...), explode('-', $fieldExpression));
     }
 
     /**
@@ -174,7 +173,7 @@ abstract class Field implements CronField, JsonSerializable
      */
     protected function isInIncrementsOfRanges(int $dateValue, string $value): bool
     {
-        [$range, $step] = array_map('trim', explode('/', $value, 2)) + [1 => '0'];
+        [$range, $step] = array_map(trim(...), explode('/', $value, 2)) + [1 => '0'];
 
         $step = (int) $step;
         // Expand the * to a full range
@@ -257,7 +256,7 @@ abstract class Field implements CronField, JsonSerializable
         }
 
         if (!str_contains($expression, '/')) {
-            [$offset, $to] = array_map([$this, 'convertLiterals'], explode('-', $expression));
+            [$offset, $to] = array_map($this->convertLiterals(...), explode('-', $expression));
             $step = 1;
         } else {
             [$range, $step] = explode('/', $expression, 2) + [1 => 0];

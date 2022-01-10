@@ -101,6 +101,9 @@ final class DayOfMonthFieldTest extends TestCase
         new DayOfMonthField($expression);
     }
 
+    /**
+     * @return array<array<string>>
+     */
     public function provideFailingExpression(): array
     {
         return [
