@@ -92,15 +92,12 @@ final class DayOfMonthField extends Field
 
         try {
             parent::validate($fieldExpression);
-
-            return;
         } catch (CronError) {
-        }
+            if (1 !== preg_match('/^(?<expression>.*)W$/', $fieldExpression, $matches)) {
+                throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
+            }
 
-        if (1 !== preg_match('/^(?<expression>.*)W$/', $fieldExpression, $matches)) {
-            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
+            $this->wrapValidate($matches['expression'], $fieldExpression);
         }
-
-        $this->wrapValidate($matches['expression'], $fieldExpression);
     }
 }

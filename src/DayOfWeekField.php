@@ -141,22 +141,14 @@ final class DayOfWeekField extends Field
 
         try {
             parent::validate($fieldExpression);
-
-            return;
         } catch (CronError) {
+            $matches = ['expression' => ''];
+            match (true) {
+                str_contains($fieldExpression, '#') => $this->handleSharpExpression($fieldExpression),
+                1 !== preg_match('/^(?<expression>.*)L$/', $fieldExpression, $matches) => throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class),
+                default => $this->wrapValidate($matches['expression'], $fieldExpression),
+            };
         }
-
-        if (str_contains($fieldExpression, '#')) {
-            $this->handleSharpExpression($fieldExpression);
-
-            return;
-        }
-
-        if (1 !== preg_match('/^(?<expression>.*)L$/', $fieldExpression, $matches)) {
-            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
-        }
-
-        $this->wrapValidate($matches['expression'], $fieldExpression);
     }
 
     private function handleSharpExpression(string $fieldExpression): void

@@ -59,9 +59,4 @@ final class SyntaxError extends InvalidArgumentException implements CronError
     {
         return new self('The fields contain invalid offset names; expecting only the following fields: `'.implode('`, `', $fields).'`.');
     }
-
-    public static function dueToInvalidStep(): self
-    {
-        return new self('The step is higher than the range. Wrap around is not allowed.');
-    }
 }

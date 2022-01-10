@@ -258,12 +258,6 @@ abstract class Field implements CronField, JsonSerializable
         if (false === filter_var($step, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
             throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }
-
-        try {
-            $this->isInIncrementsOfRanges(0, $fieldExpression);
-        } catch (SyntaxError $exception) {
-            throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class, $exception);
-        }
     }
 
 
