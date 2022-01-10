@@ -15,7 +15,7 @@ final class Scheduler implements CronScheduler
     private const FORWARD = 0;
     private const BACKWARD = 1;
 
-    private CronExpression $expression;
+    private Expression $expression;
     private DateTimeZone $timezone;
 
     /** Internal variables to optimize runs calculation */
@@ -25,7 +25,7 @@ final class Scheduler implements CronScheduler
     private bool $includeDayOfWeekAndDayOfMonthExpression;
 
     public function __construct(
-        CronExpression|string $expression,
+        Expression|string $expression,
         DateTimeZone|string $timezone,
         private StartDatePresence $startDatePresence
     ) {
@@ -35,9 +35,9 @@ final class Scheduler implements CronScheduler
         $this->initialize();
     }
 
-    private function filterExpression(CronExpression|string $expression): CronExpression
+    private function filterExpression(Expression|string $expression): Expression
     {
-        if (!$expression instanceof CronExpression) {
+        if (!$expression instanceof Expression) {
             return Expression::fromString($expression);
         }
 
@@ -79,17 +79,17 @@ final class Scheduler implements CronScheduler
         );
     }
 
-    public static function fromUTC(CronExpression|string $expression): self
+    public static function fromUTC(Expression|string $expression): self
     {
         return new self($expression, new DateTimeZone('UTC'), StartDatePresence::EXCLUDED);
     }
 
-    public static function fromSystemTimezone(CronExpression|string $expression): self
+    public static function fromSystemTimezone(Expression|string $expression): self
     {
         return new self($expression, new DateTimeZone(date_default_timezone_get()), StartDatePresence::EXCLUDED);
     }
 
-    public function expression(): CronExpression
+    public function expression(): Expression
     {
         return $this->expression;
     }
@@ -104,7 +104,7 @@ final class Scheduler implements CronScheduler
         return StartDatePresence::EXCLUDED === $this->startDatePresence;
     }
 
-    public function withExpression(CronExpression|string $expression): self
+    public function withExpression(Expression|string $expression): self
     {
         $expression = $this->filterExpression($expression);
         if ($expression->toString() === $this->expression->toString()) {

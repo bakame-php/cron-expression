@@ -327,14 +327,14 @@ final class SchedulerTest extends TestCase
         self::assertSame($strNow, $now->format(DateTime::ISO8601));
     }
 
-    public function testUpdateCronExpressionPartReturnsTheSameInstance(): void
+    public function testUpdateExpressionPartReturnsTheSameInstance(): void
     {
         $cron = Scheduler::fromSystemTimezone(Expression::fromString('23 0-23/2 * * *'));
 
         self::assertSame($cron, $cron->withTimezone(date_default_timezone_get()));
     }
 
-    public function testUpdateCronExpressionPartReturnsADifferentInstance(): void
+    public function testUpdateExpressionPartReturnsADifferentInstance(): void
     {
         $cron = Scheduler::fromSystemTimezone(Expression::fromString('23 0-23/2 * * *'));
 

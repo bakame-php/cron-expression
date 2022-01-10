@@ -31,6 +31,7 @@ All Notable changes to `cron` will be documented in this file
 - **[BC Break]** `ExpressionParser` its capabilities are now bundle inside the `Expression` class.
 - **[BC Break]** `CronFieldValidator` capabilities are removed and replaced by `CronField` value objects.
 - **[BC Break]** `Expression::__toString`, The `Expression` class no longer implements the `Stringable` interface.
+- **[BC Break]** `CronExpression` interface.
 
 ## [0.4.0] - 2022-01-03
 

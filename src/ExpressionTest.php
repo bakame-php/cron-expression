@@ -69,7 +69,7 @@ final class ExpressionTest extends TestCase
         ];
     }
 
-    public function testUpdateCronExpressionPartReturnsTheSameInstance(): void
+    public function testUpdateExpressionPartReturnsTheSameInstance(): void
     {
         $cron = Expression::fromString('23 0-23/2 * * *');
 
@@ -80,7 +80,7 @@ final class ExpressionTest extends TestCase
         self::assertEquals($cron, $cron->withDayOfWeek($cron->dayOfWeek()));
     }
 
-    public function testUpdateCronExpressionPartReturnsADifferentInstance(): void
+    public function testUpdateExpressionPartReturnsADifferentInstance(): void
     {
         $cron = Expression::fromString('23 0-23/2 * * *');
 
@@ -136,7 +136,7 @@ final class ExpressionTest extends TestCase
     }
 
     /**
-     * @dataProvider invalidCronExpression
+     * @dataProvider invalidExpression
      */
     public function testParsingFails(string $expression): void
     {
@@ -145,7 +145,7 @@ final class ExpressionTest extends TestCase
         Expression::fromString($expression);
     }
 
-    public function invalidCronExpression(): array
+    public function invalidExpression(): array
     {
         return [
             'less than 5 fields' => ['* * * 1'],

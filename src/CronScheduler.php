@@ -13,7 +13,7 @@ interface CronScheduler
     /**
      * Returns the expression attached to the object.
      */
-    public function expression(): CronExpression;
+    public function expression(): Expression;
 
     /**
      * Returns the scheduler execution timezone.
@@ -28,7 +28,7 @@ interface CronScheduler
     /**
      * Set the expression of the CRON scheduler.
      */
-    public function withExpression(CronExpression $expression): self;
+    public function withExpression(Expression $expression): self;
 
     /**
      * Set the timezone of the CRON scheduler.

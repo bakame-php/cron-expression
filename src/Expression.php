@@ -6,7 +6,7 @@ namespace Bakame\Cron;
 
 use JsonSerializable;
 
-final class Expression implements CronExpression, JsonSerializable
+final class Expression implements JsonSerializable
 {
     /**
      * Predefined aliases which can be used to substitute the CRON expression:.
@@ -186,6 +186,9 @@ final class Expression implements CronExpression, JsonSerializable
         return self::fromString('@hourly');
     }
 
+    /**
+     * @return array{minute:MinuteField, hour:HourField, dayOfMonth:DayOfMonthField, month:MonthField, dayOfWeek:DayOfWeekField}
+     */
     public function fields(): array
     {
         return [
@@ -197,27 +200,27 @@ final class Expression implements CronExpression, JsonSerializable
         ];
     }
 
-    public function minute(): CronField
+    public function minute(): MinuteField
     {
         return $this->minute;
     }
 
-    public function hour(): CronField
+    public function hour(): HourField
     {
         return $this->hour;
     }
 
-    public function dayOfMonth(): CronField
+    public function dayOfMonth(): DayOfMonthField
     {
         return $this->dayOfMonth;
     }
 
-    public function month(): CronField
+    public function month(): MonthField
     {
         return $this->month;
     }
 
-    public function dayOfWeek(): CronField
+    public function dayOfWeek(): DayOfWeekField
     {
         return $this->dayOfWeek;
     }
