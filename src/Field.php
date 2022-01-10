@@ -70,7 +70,7 @@ abstract class Field implements CronField, JsonSerializable
         match (true) {
             '*' === $fieldExpression => null,
             str_contains($fieldExpression, ',') => $this->validateChuncks($fieldExpression),
-            str_contains($fieldExpression, '/') => $this->validateSteppedRange($fieldExpression),
+            str_contains($fieldExpression, '/') => $this->validateStep($fieldExpression),
             str_contains($fieldExpression, '-') => $this->validateRange($fieldExpression),
             default => $this->validateDate($fieldExpression),
         };
@@ -158,7 +158,7 @@ abstract class Field implements CronField, JsonSerializable
         }
 
         if ($step > ($end - $start)) {
-            throw SyntaxError::dueToInvalidStep();
+            return [$start];
         }
 
         return range($start, $end, $step);
@@ -249,7 +249,7 @@ abstract class Field implements CronField, JsonSerializable
     }
 
 
-    protected function validateSteppedRange(string $fieldExpression): void
+    protected function validateStep(string $fieldExpression): void
     {
         [$range, $step] = explode('/', $fieldExpression);
 

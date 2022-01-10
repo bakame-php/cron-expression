@@ -167,10 +167,6 @@ final class DayOfWeekField extends Field
         }
 
         // 0 and 7 are both Sunday, however 7 matches date('N') format ISO-8601
-        if ($weekday === '0') {
-            $weekday = '7';
-        }
-
         if (false === filter_var($this->convertLiterals($weekday), FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 7]])) {
             throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }

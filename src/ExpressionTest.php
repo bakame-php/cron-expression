@@ -161,7 +161,7 @@ final class ExpressionTest extends TestCase
             'invalid step' => ['1-8/0 * * * *'],
             'invalid day of week modifier' => ['* * * * 3#L'],
             'many errors' => ['990 14 * * mon-fri0345345'],
-            'step higher than the range' => ['41-59/24 5 * * *'],
+            'day of week modifier too high' => ['* * * * 8#3'],
         ];
     }
 
