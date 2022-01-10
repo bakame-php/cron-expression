@@ -147,46 +147,6 @@ final class Expression implements JsonSerializable
     }
 
     /**
-     * Returns the Cron expression for running once a year, midnight, Jan. 1 - 0 0 1 1 *.
-     */
-    public static function yearly(): self
-    {
-        return self::fromString('@yearly');
-    }
-
-    /**
-     * Returns the Cron expression for running once a month, midnight, first of month - 0 0 1 * *.
-     */
-    public static function monthly(): self
-    {
-        return self::fromString('@monthly');
-    }
-
-    /**
-     * Returns the Cron expression for running once a week, midnight on Sun - 0 0 * * 0.
-     */
-    public static function weekly(): self
-    {
-        return self::fromString('@weekly');
-    }
-
-    /**
-     * Returns the Cron expression for running once a day, midnight - 0 0 * * *.
-     */
-    public static function daily(): self
-    {
-        return self::fromString('@daily');
-    }
-
-    /**
-     * Returns the Cron expression for running once an hour, first minute - 0 * * * *.
-     */
-    public static function hourly(): self
-    {
-        return self::fromString('@hourly');
-    }
-
-    /**
      * @return array{minute:MinuteField, hour:HourField, dayOfMonth:DayOfMonthField, month:MonthField, dayOfWeek:DayOfWeekField}
      */
     public function fields(): array

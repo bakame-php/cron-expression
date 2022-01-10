@@ -45,7 +45,7 @@ require 'path/to/bakame/cron/repo/autoload.php';
 
 use Bakame\Cron\Expression;
 
-Expression::daily()->toString(); //display '0 0 * * *'
+Expression::fromString('@daily')->toString(); //display '0 0 * * *'
 ~~~
 
 where `path/to/bakame/cron/repo` represents the path where the library was extracted.
@@ -82,8 +82,8 @@ require_once '/vendor/autoload.php';
 // You can define all properties on instantiation
 $expression = '0 7 * * *';
 $timezone = 'UTC';
-$scheduler1 = new Scheduler(Expression::fromString($expression),  new DateTimeZone($timezone), StartDatePresence::INCLUDED);
-$scheduler2 = new Scheduler($expression,  $timezone, StartDatePresence::INCLUDED);
+$scheduler1 = new Scheduler(Expression::fromString($expression), new DateTimeZone($timezone), StartDatePresence::INCLUDED);
+$scheduler2 = new Scheduler($expression, $timezone, StartDatePresence::INCLUDED);
 $scheduler3 = Scheduler::fromUTC($expression)->includeStartDate();
 
 //all these instantiated object are equals.
@@ -123,7 +123,7 @@ echo $run::class;
 The `Scheduler::run` method allows specifying the number of matches to skip before calculating the next run.
 
 ```php
-$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali', StartDatePresence::EXCLUDED);
+$scheduler = new Scheduler(Expression::fromString('@daily'), 'Africa/Kigali', StartDatePresence::EXCLUDED);
 echo $scheduler->run('now', 3)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2022-01-01 00:00:00, Africa/Kigali
 ```
@@ -131,7 +131,7 @@ echo $scheduler->run('now', 3)->format('Y-m-d H:i:s, e'), PHP_EOL;
 The `Scheduler::run` method accepts negative number if you want to get a run date in the past.
 
 ```php
-$scheduler = new Scheduler(Expression::daily(), 'Africa/Kigali', StartDatePresence::EXCLUDED);
+$scheduler = new Scheduler(Expression::fromString('@daily'), 'Africa/Kigali', StartDatePresence::EXCLUDED);
 echo $scheduler->run('2022-01-01 00:00:00', -2)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2021-12-31 00:00:00, Africa/Kigali
 ```
@@ -239,7 +239,7 @@ echo $cron->month()->toString();      //displays '1'
 echo $cron->dayOfWeek()->toString();  //displays '2-5'
 ```
 
-It is possible to also use an associative array using the same index as the one returned by `ExpressionParser::parse` method
+It is possible to also use an associative array using the same index as the one returned by `Expression::toArray` or `Expression::fields` methods
 
 ```php
 <?php
@@ -349,35 +349,32 @@ $field->isSatisfiedBy(new DateTime('2014-04-07 00:00:00')); // returns true
 
 ### Registering CRON Expression Aliases
 
-The `Expression` class handles by default the following aliases for CRON expression except `@reboot`.
+The `Expression` class handles the following default aliases for CRON expression except `@reboot`.
 
-You have them also exposed as named constructors.
-
-| Alias       | meaning              | Expression constructor | Expression shortcut     |
-|-------------|----------------------|------------------------|-------------------------|
-| `@reboot`   | Run once, at startup | **Not supported**      | **Not supported**       |
-| `@yearly`   | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
-| `@annually` | Run once a year      | `0 0 1 1 *`            | `Expression::yearly()`  |
-| `@monthly`  | Run once a month     | `0 0 1 * *`            | `Expression::monthly()` |
-| `@weekly`   | Run once a week      | `0 0 * * 0`            | `Expression::weekly()`  |
-| `@daily`    | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
-| `@midnight` | Run once a day       | `0 0 * * *`            | `Expression::daily()`   |
-| `@hourly`   | Run once a hour      | `0 * * * *`            | `Expression::hourly()`  |
+| Alias       | meaning              | Expression constructor |
+|-------------|----------------------|------------------------|
+| `@reboot`   | Run once, at startup | **Not supported**      | 
+| `@yearly`   | Run once a year      | `0 0 1 1 *`            |
+| `@annually` | Run once a year      | `0 0 1 1 *`            |
+| `@monthly`  | Run once a month     | `0 0 1 * *`            |
+| `@weekly`   | Run once a week      | `0 0 * * 0`            |
+| `@daily`    | Run once a day       | `0 0 * * *`            |
+| `@midnight` | Run once a day       | `0 0 * * *`            |
+| `@hourly`   | Run once a hour      | `0 * * * *`            |
 
 ```php
 <?php
 
 use Bakame\Cron\Expression;
-use Bakame\Cron\ExpressionParser;
 
-echo Expression::daily()->toString();         // displays "0 0 * * *"
+echo Expression::fromString('@DaIlY')->toString();  // displays "0 0 * * *"
 echo Expression::fromString('@DAILY')->toString();  // displays "0 0 * * *"
 ```
 
 It is possible to register more expressions via an alias name. Once registered it will be available when using the `Expression` object
 but also when instantiating the `Scheduler` class with a CRON expression string. 
 An alias name needs to be a single word containing only ASCII letters and number and prefixed with the `@` character. They should be
-associated with any valid expression.
+associated with any valid expression. **Notice: Aliases are case insensitive**
 
 ```php
 <?php
@@ -435,7 +432,8 @@ The package has a :
 - a coding style compliance test suite using [PHP CS Fixer](https://cs.symfony.com/).
 - a code analysis compliance test suite using [PHPStan](https://github.com/phpstan/phpstan).
 
-To run the tests, run the following command from the project folder.
+To run the tests, run the following command from the project folder once it is cloned from its source repository and
+the package is installed via composer.
 
 ```bash
 composer test

@@ -250,7 +250,7 @@ final class SchedulerTest extends TestCase
 
     public function testCanIterateOverNextRuns(): void
     {
-        $cron = Scheduler::fromSystemTimezone(Expression::weekly());
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('@weekly'));
         $nextRun = $cron->run('2008-11-09 08:00:00');
         self::assertEquals($nextRun, new DateTime('2008-11-16 00:00:00'));
 
@@ -293,7 +293,7 @@ final class SchedulerTest extends TestCase
 
     public function testIssue29(): void
     {
-        $cron = Scheduler::fromSystemTimezone(Expression::weekly());
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('@weekly'));
         self::assertSame(
             '2013-03-10 00:00:00',
             $cron->run('2013-03-17 00:00:00', -1)->format('Y-m-d H:i:s')

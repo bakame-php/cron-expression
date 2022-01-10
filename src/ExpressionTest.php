@@ -11,15 +11,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExpressionTest extends TestCase
 {
-    public function testFactoryRecognizesTemplates(): void
-    {
-        self::assertSame('0 0 1 1 *', Expression::yearly()->toString());
-        self::assertSame('0 0 1 * *', Expression::monthly()->toString());
-        self::assertSame('0 0 * * 0', Expression::weekly()->toString());
-        self::assertSame('0 0 * * *', Expression::daily()->toString());
-        self::assertSame('0 * * * *', Expression::hourly()->toString());
-    }
-
     public function testParsesCronSchedule(): void
     {
         // '2010-09-10 12:00:00'
