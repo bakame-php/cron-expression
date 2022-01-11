@@ -37,7 +37,7 @@ final class DayOfWeekField extends Field
         7 => 'SUN',
     ];
 
-    protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool
+    protected function isExpressionSatisfiedBy(string $fieldExpression, DateTimeInterface $date): bool
     {
         if ('?' === $fieldExpression) {
             return true;

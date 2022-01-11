@@ -50,7 +50,7 @@ final class DayOfMonthField extends Field
             if ($adjusted > 0 && $adjusted <= $lastDayOfMonth) {
                 $target->setDate($currentYear, $currentMonth, $adjusted);
                 if (6 > (int) $target->format('N') && (int) $target->format('m') == $currentMonth) {
-                    return $target->format('j') === $currentDay;
+                    break;
                 }
             }
         }
@@ -58,7 +58,7 @@ final class DayOfMonthField extends Field
         return $target->format('j') === $currentDay;
     }
 
-    protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool
+    protected function isExpressionSatisfiedBy(string $fieldExpression, DateTimeInterface $date): bool
     {
         $fieldValue = $date->format('d');
 

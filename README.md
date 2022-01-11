@@ -52,9 +52,36 @@ where `path/to/bakame/cron/repo` represents the path where the library was extra
 
 ## Usage
 
+The following example illustrates some features of the package.
+
+```php
+use Bakame\Cron\Scheduler;
+use Bakame\Cron\Expression;
+
+Expression::registerAlias('@every_half_hour', '*/30 * * * *');
+
+$scheduler = Scheduler::fromSystemTimezone('@every_half_hour');
+
+$scheduler->isDue('2022-03-15 14:30:01'); // returns true
+$scheduler->isDue('2022-03-15 14:29:59'); // returns false
+
+$runs = $scheduler->yieldRunsBetween(new DateTime('2019-10-10 23:29:25'), '2019-10-11 01:30:25');
+var_export(array_map(
+    fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'), 
+    iterator_to_array($runs, false)
+));
+// array (
+//   0 => '2019-10-10 23:30:00',
+//   1 => '2019-10-11 00:00:00',
+//   2 => '2019-10-11 00:30:00',
+//   3 => '2019-10-11 01:00:00',
+//   4 => '2019-10-11 01:30:00',
+// )
+```
+
 ### Calculating the running time
 
-#### Instantiating the Scheduler immutable Value Object
+#### Instantiating the Scheduler Immutable Value Object
 
 To determine the next running time for a CRON expression the package uses the `Bakame\Cron\Scheduler` class.  
 To work as expected this class requires:
@@ -218,12 +245,72 @@ $runs = $scheduler->yieldRunsBetween('2019-10-10 23:20:00', '2019-09-09 00:30:00
 
 The `Bakame\Cron\Scheduler` object exposes the CRON expression using the `Bakame\Cron\Expression` immutable value object.
 
-### The CRON Expression Immutable Value Object
+### Handling CRON Expression
 
-#### Instantiating the object
+To work as intended, The `Bakame\Cron\Expression` resolves CRON Expression as they are described in the [CRONTAB documentation](https://www.unix.com/man-page/linux/5/crontab/)
 
-To ease manipulating a CRON expression the package comes bundle with a `Expression` immutable value object
-representing a CRON expression.
+A CRON expression is a string representing the schedule for a particular command to execute.  The parts of a CRON schedule are as follows:
+
+    *    *    *    *    *
+    -    -    -    -    -
+    |    |    |    |    |
+    |    |    |    |    |
+    |    |    |    |    +----- day of week (0 - 7) (Sunday=0 or 7)
+    |    |    |    +---------- month (1 - 12)
+    |    |    +--------------- day of month (1 - 31)
+    |    +-------------------- hour (0 - 23)
+    +------------------------- min (0 - 59)
+
+The `Expression` value object also supports the following notations:
+
+- **L:** stands for "last" and specifies the last day of the month;
+- **W:** is used to specify the weekday (Monday-Friday) nearest the given day;
+- **#:** allowed for the `dayOfWeek` field, and must be followed by a number between one and five;
+- range, split notations as well as the **?** character;
+
+#### Instantiation
+
+By instantiating an `Expression` object you are validating its associated CRON Expression Field. Each CRON expression field
+is validated via a `CronField` implementing object:
+
+```php
+<?php
+use Bakame\Cron\MonthField;
+$field = new MonthField('JAN'); //!works
+$field = new MonthField(23);    //will throw a SyntaxError
+```
+
+The package contains the following CRON expression Field value objects
+
+- `MinuteField`
+- `HourField`
+- `DayOfMonthField`
+- `MonthField`
+- `DayOfWeekField`
+
+It is possible to use those CRON expression Field value objects to instantiate an `Expression` instance:
+
+```php
+<?php
+$expression = new Expression(
+    new MinuteField('3-59/15'),
+    new HourField('6-12'),
+    new DayOfMonthField('*/15'),
+    new MonthField('1'),
+    new DayOfWeekField('2-5'),
+);
+$expression->toString(); // display 3-59/15 6-12 */15 1 2-5
+
+// At every 15th minute from 3 through 59 past 
+// every hour from 6 through 12
+// on every 15th day-of-month
+// if it's on every day-of-week from Tuesday through Friday
+// in January.
+```
+
+To ease instantiation the `Expression` object exposes easier to use named constructors. 
+
+`Expression::fromString` returns a new instance from a string.
 
 ```php
 <?php
@@ -237,9 +324,18 @@ echo $cron->hour->toString();       //displays '6-12'
 echo $cron->dayOfMonth->toString(); //displays '*/15'
 echo $cron->month->toString();      //displays '1'
 echo $cron->dayOfWeek->toString();  //displays '2-5'
+var_export($cron->toArray());
+// returns
+// array (
+//   'minute' => '3-59/15',
+//   'hour' => '6-12',
+//   'dayOfMonth' => '*/15',
+//   'month' => '1',
+//   'dayOfWeek' => '2-5',
+// )
 ```
 
-It is possible to also use an associative array using the same index as the one returned by `Expression::toArray` or `Expression::fields` methods
+`Expression::fromFields` returns a new instance from an associative array using the same index as the one returned by `Expression::toArray`.
 
 ```php
 <?php
@@ -258,10 +354,39 @@ echo $cron->dayOfWeek->toString();  //displays '5'
 **If a field is not provided it will be replaced by the `*` character.**
 **If unknown field are provided a `SyntaxError` exception will be thrown.**
 
-#### Updating the object
+#### Formatting
 
-Apart from exposing getter methods you can also easily update the CRON expression via its `with*` methods where the `*`
-is replaced by the corresponding CRON field.
+The value object implements the `JsonSerializable` interface to ease interoperability and a `toString` method to
+return the CRON expression string representation. As previously shown in the examples above, each CRON expression field 
+is represented by a public readonly property. Each of them also exposes a `toString` method 
+and implements the `JsonSerializable` interface too.
+
+```php
+<?php
+
+use Bakame\Cron\Expression;
+
+$cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
+echo $cron->minute->toString();  //display '3-59/15'
+echo json_encode($cron->hour);  //display '"6-12"'
+
+echo $cron->toString();  //display '3-59/15 6-12 */15 1 2-5'
+echo json_encode($cron); //display '"3-59\/15 6-12 *\/15 1 2-5"'
+
+echo json_encode($cron->fields());  //display '{"minute":"3-59\/15","hour":"6-12","dayOfMonth":"*\/15","month":"1","dayOfWeek":"2-5"}'
+echo json_encode($cron->toArray());  //display '{"minute":"3-59\/15","hour":"6-12","dayOfMonth":"*\/15","month":"1","dayOfWeek":"2-5"}'
+```
+
+- The `Expression::fields` returns an associative array of CRON expression field `CronField` objects representation;
+- The `Expression::toArray` returns an associative array of CRON expression field string representation;
+
+**Both methods produce the same JSON output string**
+
+#### Updates
+
+Updating the CRON expression is done via its `with*` methods where the `*` is replaced by the corresponding CRON expression field name.
+
+Those methods expect a `CronField` instance, a string or an integer.
 
 ```php
 <?php
@@ -276,109 +401,7 @@ echo $cron->withMonth('2')->toString();         //displays '3-59/15 6-12 */15 2 
 echo $cron->withDayOfWeek(2)->toString();       //displays '3-59/15 6-12 */15 1 2'
 ```
 
-#### Formatting the object
-
-The value object implements the `JsonSerializable` interface to ease interoperability.
-
-```php
-<?php
-
-use Bakame\Cron\Expression;
-
-$cron = Expression::fromString('3-59/15 6-12 */15 1 2-5');
-echo $cron->toString();  //display '3-59/15 6-12 */15 1 2-5'
-echo json_encode($cron); //display '"3-59\/15 6-12 *\/15 1 2-5"'
-```
-
-### Parsing a CRON Expression
-
-To work as intended, The `Bakame\Cron\Expression` resolves CRON Expression as they are described in the [CRONTAB documentation](https://www.unix.com/man-page/linux/5/crontab/)
-
-A CRON expression is a string representing the schedule for a particular command to execute.  The parts of a CRON schedule are as follows:
-
-    *    *    *    *    *
-    -    -    -    -    -
-    |    |    |    |    |
-    |    |    |    |    |
-    |    |    |    |    +----- day of week (0 - 7) (Sunday=0 or 7)
-    |    |    |    +---------- month (1 - 12)
-    |    |    +--------------- day of month (1 - 31)
-    |    +-------------------- hour (0 - 23)
-    +------------------------- min (0 - 59)
-
-The package also supports the following notation:
-
-- **L:** stands for "last" and specifies the last day of the month;
-- **W:** is used to specify the weekday (Monday-Friday) nearest the given day;
-- **#:** allowed for the `dayOfWeek` field, and must be followed by a number between one and five;
-- range, split notations as well as the **?** character;
-
-
-### Validating a CRON Expression
-
-By instantiating an `Expression` object you are validating its associated CRON Expression.
-
-In case of error a `Bakame\Cron\SyntaxError` exception will be thrown if the submitted string is not
-a valid CRON expression.
-
-```php
-Expression::fromString('not a real CRON expression');
-// throws a Bakame\Cron\SyntaxError with the following message 'Invalid CRON expression'
-// calling SyntaxError::errors method will list the errors and the fields where it occurred.
-```
-
-Validation of a specific CRON expression field can be done using a `CronField` implementing object:
-
-```php
-<?php
-use Bakame\Cron\MonthField;
-$field = new MonthField('JAN'); //!works
-$field = new MonthField(23);    //will throw a SyntaxError
-```
-
-The package contains the following CRON Fiel expression value object
-
-- `MinuteField`
-- `HourField`
-- `DayOfMonthField`
-- `MonthField`
-- `DayOfWeekField`
-
-It is possible to use those CRON Field expression value object to instantiate an `Expression` instance:
-
-```php
-<?php
-use Bakame\Cron\Expression;
-use Bakame\Cron\MonthField;
-
-$expression = new Expression(
-    new MinuteField('3-59/15'),
-    new HourField('6-12'),
-    new DayOfMonthField('*/15'),
-    new MonthField('1'),
-    new DayOfWeekField('2-5'),
-);
-$expression->toString(); // display 3-59/15 6-12 */15 1 2-5
-
-// At every 15th minute from 3 through 59 past 
-// every hour from 6 through 12
-// on every 15th day-of-month
-// if it's on every day-of-week from Tuesday through Friday
-// in January.
-```
-
-It is also possible to validate a date against a specific field expression using a `CronField` object.
-
-```php
-use Bakame\Cron\HourField;
-
-$field = new HourField('*/3'); //!works
-$field->isSatisfiedBy(new DateTime('2014-04-07 00:00:00')); // returns true
-```
-
-**NOTICE: Field validator do not take into account the `DateTimeInterface` object timezone**
-
-### Registering CRON Expression Aliases
+#### Registering CRON Expression Aliases
 
 The `Expression` class handles the following default aliases for CRON expression except `@reboot`.
 

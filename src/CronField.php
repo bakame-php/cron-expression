@@ -11,22 +11,22 @@ use DateTimeInterface;
 interface CronField
 {
     /**
-     * Returns the CRON field string representation.
+     * Returns the CRON expression field string representation.
      */
     public function toString(): string;
 
     /**
-     * Check if the respective value of a DateTimeInterface object satisfies a CRON exp. field.
+     * Tells whether the specified DateTimeInterface object satisfies the CRON expression field.
      */
     public function isSatisfiedBy(DateTimeInterface $date): bool;
 
     /**
-     * This method is used to increment a DateTimeInterface object by the unit of the cron field.
+     * Increment a DateTimeInterface object by the unit of the CRON expression field.
      */
     public function increment(DateTimeInterface $date): DateTimeImmutable;
 
     /**
-     * This method is used to decrement a DateTimeInterface object by the unit of the cron field.
+     * Decrement a DateTimeInterface object by the unit of the CRON expression field.
      */
     public function decrement(DateTimeInterface $date): DateTimeImmutable;
 }

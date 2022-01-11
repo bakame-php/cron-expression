@@ -11,7 +11,7 @@ use Generator;
 interface CronScheduler
 {
     /**
-     * Returns the expression attached to the object.
+     * Returns the CRON expression attached to the object.
      */
     public function expression(): Expression;
 
@@ -21,27 +21,39 @@ interface CronScheduler
     public function timezone(): DateTimeZone;
 
     /**
-     * Tells whether to include or not the relative time when calculating the next run.
+     * Tells whether to include or not the relative time when calculating the next run If eligible.
      */
     public function isStartDateExcluded(): bool;
 
     /**
-     * Set the expression of the CRON scheduler.
+     * Return an instance with the specified CRON expression.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that contains the specified CRON expression.
      */
     public function withExpression(Expression $expression): self;
 
     /**
-     * Set the timezone of the CRON scheduler.
+     * Return an instance with the specified Timezone.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that contains the specified Timezone.
      */
     public function withTimezone(DateTimeZone $timezone): self;
 
     /**
-     * Include the relative time in the results if possible.
+     * Return an instance which includes the relative time when calculating the next run If eligible.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that includes the relative time when calculating the next run If eligible.
      */
     public function includeStartDate(): self;
 
     /**
-     * Exclude the relative time in the results.
+     * Return an instance which excludes the relative time when calculating the next run.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that excludes the relative time when calculating the next run.
      */
     public function excludeStartDate(): self;
 
@@ -49,8 +61,7 @@ interface CronScheduler
      * Determine if the cron is due to run based on a specific date.
      * This method assumes that the current number of seconds are irrelevant, and should be called once per minute.
      *
-     * @param DateTimeInterface|string $when Specific date
-     *                                       If the date is expressed with a string,
+     * @param DateTimeInterface|string $when Specific date. If the date is expressed with a string,
      *                                       the scheduler will assume the date uses the underlying system timezone
      */
     public function isDue(DateTimeInterface|string $when): bool;
@@ -76,6 +87,11 @@ interface CronScheduler
      * Returns multiple run dates ending at most at the specific ending date and ending at most after the specified
      * interval.
      *
+     * @param DateTimeInterface|string $endDate End of calculation date If the date is expressed with a string,
+     *                                          the scheduler will assume the date uses the underlying system timezone
+     * @param DateInterval|string $interval Duration. If the interval is express with a string,
+     *                                      the scheduler will resolve it using DateInterval::createFromDateString
+     *
      * @throws CronError
      *
      * @return Generator<DateTimeImmutable>
@@ -85,6 +101,11 @@ interface CronScheduler
     /**
      * Returns multiple run dates starting at most at the specific starting date and ending at most after the specified
      * interval.
+     *
+     * @param DateTimeInterface|string $startDate Start of calculation date. If the date is expressed with a string,
+     *                                            the scheduler will assume the date uses the underlying system timezone
+     * @param DateInterval|string $interval Duration. If the interval is express with a string,
+     *                                      the scheduler will resolve it using DateInterval::createFromDateString
      *
      * @throws CronError
      *
@@ -97,7 +118,12 @@ interface CronScheduler
      * and end at most at the specified end date. Depending on the start date and end date value the returned Generator
      * can list the runs backward.
      *
+     * @param DateTimeInterface|string $startDate Start of calculation date. If the date is expressed with a string,
+     *                                            the scheduler will assume the date uses the underlying system timezone
+     * @param DateTimeInterface|string $endDate End of calculation date. If the date is expressed with a string,
+     *                                          the scheduler will assume the date uses the underlying system timezone
      * @throws CronError
+     *
      * @return Generator<DateTimeImmutable>
      */
     public function yieldRunsBetween(DateTimeInterface|string $startDate, DateTimeInterface|string $endDate): Generator;
@@ -106,10 +132,9 @@ interface CronScheduler
      * Get multiple run dates starting at least at the current date or a specific date or after it.
      * The last generated date will be after or equal to the specified date.
      *
-     * @param DateTimeInterface|string $startDate Relative calculation date
+     * @param DateTimeInterface|string $startDate Relative calculation date. If the date is expressed with a string,
+     *                                            the scheduler will assume the date uses the underlying system timezone
      * @param int $recurrences Set the total number of dates to calculate
-     *                         If the date is expressed with a string,
-     *                         the scheduler will assume the date uses the underlying system timezone
      *
      * @throws CronError
      *
@@ -121,16 +146,15 @@ interface CronScheduler
      * Get multiple run dates ending at most at the specified start date or before it.
      * The last generated date will be before or equal to the specified date.
      *
-     * @param DateTimeInterface|string $endDate Relative calculation date
+     * @param DateTimeInterface|string $endDate Relative calculation date. If the date is expressed with a string,
+     *                                          the scheduler will assume the date uses the underlying system timezone
      * @param int $recurrences Set the total number of dates to calculate
-     *                         If the date is expressed with a string,
-     *                         the scheduler will assume the date uses the underlying system timezone
      *
      * @throws CronError
      * @return Generator<DateTimeImmutable>
      *
      *
-     * @see Scheduler::yieldRunsForward
+     * @see CronScheduler::yieldRunsForward
      */
     public function yieldRunsBackward(DateTimeInterface|string $endDate, int $recurrences): Generator;
 }

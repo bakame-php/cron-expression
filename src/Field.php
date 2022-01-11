@@ -54,7 +54,7 @@ abstract class Field implements CronField, JsonSerializable
     public function isSatisfiedBy(DateTimeInterface $date): bool
     {
         foreach (array_map(trim(...), explode(',', $this->field)) as $expression) {
-            if ($this->isSatisfiedExpression($expression, $date)) {
+            if ($this->isExpressionSatisfiedBy($expression, $date)) {
                 return true;
             }
         }
@@ -62,8 +62,14 @@ abstract class Field implements CronField, JsonSerializable
         return false;
     }
 
-    abstract protected function isSatisfiedExpression(string $fieldExpression, DateTimeInterface $date): bool;
+    /**
+     * Tells whether the specified date satisfies the field expression.
+     */
+    abstract protected function isExpressionSatisfiedBy(string $fieldExpression, DateTimeInterface $date): bool;
 
+    /**
+     * Validate a CRON expression field.
+     */
     protected function validate(string $fieldExpression): void
     {
         $fieldExpression = $this->convertLiterals($fieldExpression);
@@ -115,7 +121,7 @@ abstract class Field implements CronField, JsonSerializable
     }
 
     /**
-     * Test if a value is within a range.
+     * Tells whether a value is within a range.
      */
     protected function isInRange(int $dateValue, string $value): bool
     {
@@ -125,7 +131,7 @@ abstract class Field implements CronField, JsonSerializable
     }
 
     /**
-     * Test if a value is within an increments of ranges (offset[-to]/step size).
+     * Tells whether a value is within an increments of ranges (offset[-to]/step size).
      */
     protected function isInIncrementsOfRanges(int $dateValue, string $value): bool
     {
@@ -147,6 +153,12 @@ abstract class Field implements CronField, JsonSerializable
 
     /**
      * Steps larger than the range need to wrap around and be handled slightly differently than smaller steps.
+     *
+     * This is actually false. The C implementation will allow a
+     * larger step as valid syntax, it never wraps around. It will stop
+     * once it hits the end. Unfortunately this means in future versions
+     * we will not wrap around. However, because the logic exists today
+     * per the above documentation, fixing the bug from #89
      *
      * @return array<int>
      */
@@ -241,14 +253,12 @@ abstract class Field implements CronField, JsonSerializable
         return $date;
     }
 
-
     protected function validateAllowedValues(string $fieldExpression): void
     {
         foreach (explode(',', $fieldExpression) as $listItem) {
             $this->wrapValidate($listItem, $fieldExpression);
         }
     }
-
 
     protected function validateIncrement(string $fieldExpression): void
     {
@@ -260,7 +270,6 @@ abstract class Field implements CronField, JsonSerializable
             throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }
     }
-
 
     protected function validateRange(string $fieldExpression): void
     {
@@ -283,7 +292,6 @@ abstract class Field implements CronField, JsonSerializable
             throw SyntaxError::dueToInvalidFieldExpression($fieldExpression, $this::class);
         }
     }
-
 
     protected function validateDate(string $fieldExpression): void
     {

@@ -30,7 +30,10 @@ final class Expression implements JsonSerializable
     private static array $registeredAliases = self::DEFAULT_ALIASES;
 
     /**
-     * @throws ExpressionAliasError
+     * Registered a user defined CRON Expression Alias.
+     *
+     * @throws ExpressionAliasError If the expression or the alias name are invalid
+     *                              or if the alias is already registered.
      */
     public static function registerAlias(string $alias, string $expression): void
     {
@@ -49,6 +52,11 @@ final class Expression implements JsonSerializable
         };
     }
 
+    /**
+     * Unregistered a user defined CRON Expression Alias.
+     *
+     * @throws ExpressionAliasError If the user tries to unregister a built-in alias
+     */
     public static function unregisterAlias(string $alias): void
     {
         if (isset(self::DEFAULT_ALIASES[$alias])) {
@@ -58,6 +66,9 @@ final class Expression implements JsonSerializable
         unset(self::$registeredAliases[$alias]);
     }
 
+    /**
+     * Tells whether a CRON Expression alias is registered.
+     */
     public static function supportsAlias(string $alias): bool
     {
         return isset(self::$registeredAliases[$alias]);
@@ -83,6 +94,9 @@ final class Expression implements JsonSerializable
     ) {
     }
 
+    /**
+     * @param array{minute:MinuteField, hour:HourField, dayOfMonth:DayOfMonthField, month:MonthField, dayOfWeek:DayOfWeekField} $properties
+     */
     public static function __set_state(array $properties): self
     {
         return new self(
@@ -94,6 +108,9 @@ final class Expression implements JsonSerializable
         );
     }
 
+    /**
+     * Returns a new instance from a string.
+     */
     public static function fromString(string $expression): self
     {
         $expression = self::$registeredAliases[strtolower($expression)] ?? $expression;
@@ -113,7 +130,7 @@ final class Expression implements JsonSerializable
     }
 
     /**
-     * Returns an instance from an associative array.
+     * Returns a new instance from an associative array.
      *
      * @param array<string, string|int|CronField> $fields
      */
@@ -147,6 +164,8 @@ final class Expression implements JsonSerializable
     }
 
     /**
+     * Returns the CRON expression Fields object in an associative array.
+     *
      * @return array{minute:MinuteField, hour:HourField, dayOfMonth:DayOfMonthField, month:MonthField, dayOfWeek:DayOfWeekField}
      */
     public function fields(): array
@@ -161,6 +180,8 @@ final class Expression implements JsonSerializable
     }
 
     /**
+     * Returns the CRON expression Fields string in an associative array.
+     *
      * @return array<string>
      */
     public function toArray(): array
@@ -168,6 +189,9 @@ final class Expression implements JsonSerializable
         return array_map(fn (CronField $f): string => $f->toString(), $this->fields());
     }
 
+    /**
+     * Returns the CRON expression string representation.
+     */
     public function toString(): string
     {
         return implode(' ', $this->toArray());
@@ -178,6 +202,14 @@ final class Expression implements JsonSerializable
         return $this->toString();
     }
 
+    /**
+     * Return an instance with the specified CRON expression minute field.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that contains the specified CRON expression minute field.
+     *
+     *
+     */
     public function withMinute(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
@@ -193,6 +225,14 @@ final class Expression implements JsonSerializable
         return new self($fieldExpression, $this->hour, $this->dayOfMonth, $this->month, $this->dayOfWeek);
     }
 
+    /**
+     * Return an instance with the specified CRON expression hour field.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that contains the specified CRON expression hour field.
+     *
+     *
+     */
     public function withHour(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
@@ -208,6 +248,14 @@ final class Expression implements JsonSerializable
         return new self($this->minute, $fieldExpression, $this->dayOfMonth, $this->month, $this->dayOfWeek);
     }
 
+    /**
+     * Return an instance with the specified CRON expression day of month field.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that contains the specified CRON expression day of month field.
+     *
+     *
+     */
     public function withDayOfMonth(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
@@ -223,6 +271,14 @@ final class Expression implements JsonSerializable
         return new self($this->minute, $this->hour, $fieldExpression, $this->month, $this->dayOfWeek);
     }
 
+    /**
+     * Return an instance with the specified CRON expression month field.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that contains the specified CRON expression month field.
+     *
+     *
+     */
     public function withMonth(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
@@ -238,6 +294,14 @@ final class Expression implements JsonSerializable
         return new self($this->minute, $this->hour, $this->dayOfMonth, $fieldExpression, $this->dayOfWeek);
     }
 
+    /**
+     * Return an instance with the specified CRON expression day of week field.
+     *
+     * This method MUST retain the state of the current instance, and return
+     * an instance that contains the specified CRON expression day of week field.
+     *
+     *
+     */
     public function withDayOfWeek(CronField|string|int $fieldExpression): self
     {
         $fieldExpression = match (true) {
