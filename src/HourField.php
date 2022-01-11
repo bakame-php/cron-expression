@@ -45,9 +45,7 @@ final class HourField extends Field
         $date = $this->toDateTimeImmutable($date);
 
         if ('*' === $this->field) {
-            return $date
-                ->sub(new DateInterval('PT'.(int) $date->format('j').'M'))
-                ->sub(new DateInterval('PT1M'));
+            return $date->sub(new DateInterval('PT'.((int) $date->format('j') + 1).'M'));
         }
 
         $currentHour = (int) $date->format('H');

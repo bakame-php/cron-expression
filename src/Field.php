@@ -217,11 +217,12 @@ abstract class Field implements CronField, JsonSerializable
 
         if (!str_contains($expression, '/')) {
             [$offset, $to] = array_map($this->convertLiterals(...), explode('-', $expression));
-            $step = 1;
-        } else {
-            [$range, $step] = explode('/', $expression, 2) + [1 => 0];
-            [$offset, $to] = explode('-', (string) $range, 2) + [1 => $max];
+
+            return $this->activeRanges((int) $offset, (int) $to, 1);
         }
+
+        [$range, $step] = explode('/', $expression, 2) + [1 => 0];
+        [$offset, $to] = explode('-', (string) $range, 2) + [1 => $max];
 
         return $this->activeRanges((int) $offset, (int) $to, (int) $step);
     }
