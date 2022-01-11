@@ -473,7 +473,8 @@ Expression::supportsAlias('@daily');  //return true
 Expression::supportsAlias('@every');  //return true
 Scheduler::fromUTC('@every');        // works!
 
-Expression::unregisterAlias('@every');
+Expression::unregisterAlias('@every'); //return true
+Expression::unregisterAlias('@every'); //return false
 
 Expression::supportsAlias('@every');   //return false
 Scheduler::fromUTC('@every');          //throws SyntaxError unknown or unsupported expression

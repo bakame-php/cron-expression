@@ -2,6 +2,25 @@
 
 All Notable changes to `cron` will be documented in this file
 
+## [0.5.1] - 2022-01-11
+
+### Added
+
+- None
+
+### Fixed
+
+- Fix `Expression::unregisterAlias` should return a boolean
+- Fix `alias` normalisation
+
+### Deprecate
+
+- None
+
+### Removed
+
+- None
+
 ## [0.5.0] - 2022-01-11
 
 ### Added
@@ -109,7 +128,8 @@ All Notable changes to `cron` will be documented in this file
 
 Initial Release of `cron`
 
-[Next]: https://github.com/bakame-php/cron-expression/compare/0.5.0...master
+[Next]: https://github.com/bakame-php/cron-expression/compare/0.5.1...master
+[0.5.1]: https://github.com/bakame-php/cron-expression/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/bakame-php/cron-expression/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/bakame-php/cron-expression/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/bakame-php/cron-expression/compare/0.2.0...0.3.0

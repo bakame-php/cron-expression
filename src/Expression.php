@@ -43,12 +43,12 @@ final class Expression implements JsonSerializable
             throw ExpressionAliasError::dueToInvalidExpression($expression, $exception);
         }
 
-        $alias = strtolower($alias);
+        $shortcut = strtolower($alias);
 
         match (true) {
-            1 !== preg_match('/^@\w+$/', $alias) => throw ExpressionAliasError::dueToInvalidName($alias),
-            isset(self::$registeredAliases[$alias]) => throw ExpressionAliasError::dueToDuplicateEntry($alias),
-            default => self::$registeredAliases[$alias] = $expression,
+            1 !== preg_match('/^@\w+$/', $shortcut) => throw ExpressionAliasError::dueToInvalidName($alias),
+            isset(self::$registeredAliases[$shortcut]) => throw ExpressionAliasError::dueToDuplicateEntry($alias),
+            default => self::$registeredAliases[$shortcut] = $expression,
         };
     }
 
@@ -57,13 +57,20 @@ final class Expression implements JsonSerializable
      *
      * @throws ExpressionAliasError If the user tries to unregister a built-in alias
      */
-    public static function unregisterAlias(string $alias): void
+    public static function unregisterAlias(string $alias): bool
     {
-        if (isset(self::DEFAULT_ALIASES[$alias])) {
+        $shortcut = strtolower($alias);
+        if (isset(self::DEFAULT_ALIASES[$shortcut])) {
             throw ExpressionAliasError::dueToForbiddenAliasRemoval($alias);
         }
 
+        if (!isset(self::$registeredAliases[$shortcut])) {
+            return false;
+        }
+
         unset(self::$registeredAliases[$alias]);
+
+        return true;
     }
 
     /**
@@ -71,7 +78,7 @@ final class Expression implements JsonSerializable
      */
     public static function supportsAlias(string $alias): bool
     {
-        return isset(self::$registeredAliases[$alias]);
+        return isset(self::$registeredAliases[strtolower($alias)]);
     }
 
     /**

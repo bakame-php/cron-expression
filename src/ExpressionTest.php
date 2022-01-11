@@ -162,10 +162,11 @@ final class ExpressionTest extends TestCase
 
         self::assertCount(8, Expression::aliases());
         self::assertArrayHasKey('@every', Expression::aliases());
-        self::assertTrue(Expression::supportsAlias('@every'));
+        self::assertTrue(Expression::supportsAlias('@eVeRy'));
         self::assertEquals(Expression::fromString('@every'), Expression::fromString('* * * * *'));
 
-        Expression::unregisterAlias('@every');
+        self::assertTrue(Expression::unregisterAlias('@every'));
+        self::assertFalse(Expression::unregisterAlias('@every'));
 
         self::assertCount(7, Expression::aliases());
         self::assertArrayNotHasKey('@every', Expression::aliases());
