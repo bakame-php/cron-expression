@@ -7,7 +7,6 @@ namespace Bakame\Cron;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
-use DateTimeZone;
 
 /**
  * Hours field.  Allows: * , / -.
@@ -26,16 +25,10 @@ final class HourField extends Field
     {
         $date = $this->toDateTimeImmutable($date);
 
-        // Change timezone to UTC temporarily. This will
-        // allow us to go back or forwards an hour even
-        // if DST will be changed between the hours.
         if ('*' === $this->field) {
             return $date
                 ->sub(new DateInterval('PT'.(int) $date->format('j').'M'))
-                ->setTimezone(new DateTimeZone('UTC'))
-                ->add(new DateInterval('PT1H'))
-                ->setTimezone($date->getTimezone())
-            ;
+                ->add(new DateInterval('PT1H'));
         }
 
         $currentHour = (int) $date->format('H');
@@ -51,15 +44,10 @@ final class HourField extends Field
     {
         $date = $this->toDateTimeImmutable($date);
 
-        // Change timezone to UTC temporarily. This will
-        // allow us to go back or forwards an hour even
-        // if DST will be changed between the hours.
         if ('*' === $this->field) {
             return $date
                 ->sub(new DateInterval('PT'.(int) $date->format('j').'M'))
-                ->setTimezone(new DateTimeZone('UTC'))
-                ->sub(new DateInterval('PT1M'))
-                ->setTimezone($date->getTimezone());
+                ->sub(new DateInterval('PT1M'));
         }
 
         $currentHour = (int) $date->format('H');
