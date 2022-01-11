@@ -2,7 +2,7 @@
 
 All Notable changes to `cron` will be documented in this file
 
-## [Next] - TBD
+## [0.5.0] - 2022-01-11
 
 ### Added
 
@@ -109,8 +109,9 @@ All Notable changes to `cron` will be documented in this file
 
 Initial Release of `cron`
 
-[Next]: https://github.com/bakame-php/cron-expression/compare/0.4.0...master
-[0.4.0]: https://github.com/bakame-php/cron-expression/compare/0.2.0...0.4.0
+[Next]: https://github.com/bakame-php/cron-expression/compare/0.5.0...master
+[0.5.0]: https://github.com/bakame-php/cron-expression/compare/0.4.0...0.5.0
+[0.4.0]: https://github.com/bakame-php/cron-expression/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/bakame-php/cron-expression/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/bakame-php/cron-expression/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/bakame-php/cron-expression/releases/tag/0.1.0
