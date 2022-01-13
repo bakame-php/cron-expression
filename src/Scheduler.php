@@ -159,9 +159,9 @@ final class Scheduler implements CronScheduler
     public function isDue(DateTimeInterface|string $when): bool
     {
         try {
-            $when = $this->toDateTimeImmutable($when);
+            $date = $this->toDateTimeImmutable($when);
 
-            return $this->nextRun($when, StartDatePresence::INCLUDED, self::FORWARD) === $when;
+            return $this->nextRun($date, StartDatePresence::INCLUDED, self::FORWARD) === $date;
         } catch (Throwable) {
             return false;
         }

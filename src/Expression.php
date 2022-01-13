@@ -39,7 +39,7 @@ final class Expression implements JsonSerializable
     {
         try {
             self::fromString($expression);
-        } catch (SyntaxError $exception) {
+        } catch (CronError $exception) {
             throw ExpressionAliasError::dueToInvalidExpression($expression, $exception);
         }
 
@@ -117,6 +117,8 @@ final class Expression implements JsonSerializable
 
     /**
      * Returns a new instance from a string.
+     *
+     * @throws CronError
      */
     public static function fromString(string $expression): self
     {
@@ -140,6 +142,8 @@ final class Expression implements JsonSerializable
      * Returns a new instance from an associative array.
      *
      * @param array<string, string|int|CronField> $fields
+     *
+     * @throws CronError
      */
     public static function fromFields(array $fields): self
     {
@@ -215,7 +219,7 @@ final class Expression implements JsonSerializable
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the specified CRON expression minute field.
      *
-     *
+     * @throws CronError
      */
     public function withMinute(CronField|string|int $fieldExpression): self
     {
@@ -238,7 +242,7 @@ final class Expression implements JsonSerializable
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the specified CRON expression hour field.
      *
-     *
+     * @throws CronError
      */
     public function withHour(CronField|string|int $fieldExpression): self
     {
@@ -261,7 +265,7 @@ final class Expression implements JsonSerializable
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the specified CRON expression day of month field.
      *
-     *
+     * @throws CronError
      */
     public function withDayOfMonth(CronField|string|int $fieldExpression): self
     {
@@ -284,7 +288,7 @@ final class Expression implements JsonSerializable
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the specified CRON expression month field.
      *
-     *
+     * @throws CronError
      */
     public function withMonth(CronField|string|int $fieldExpression): self
     {
@@ -307,7 +311,7 @@ final class Expression implements JsonSerializable
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the specified CRON expression day of week field.
      *
-     *
+     * @throws CronError
      */
     public function withDayOfWeek(CronField|string|int $fieldExpression): self
     {

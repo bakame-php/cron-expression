@@ -22,6 +22,8 @@ abstract class Field implements CronField, JsonSerializable
 
     /**
      * @final
+     *
+     * @throws CronError
      */
     public function __construct(string|int $field)
     {
@@ -35,6 +37,8 @@ abstract class Field implements CronField, JsonSerializable
      * @final
      *
      * @param array{field:string} $properties
+     *
+     * @throws CronError
      */
     public static function __set_state(array $properties): static
     {
@@ -69,6 +73,8 @@ abstract class Field implements CronField, JsonSerializable
 
     /**
      * Validate a CRON expression field.
+     *
+     * @throws CronError
      */
     protected function validate(string $fieldExpression): void
     {
@@ -83,11 +89,14 @@ abstract class Field implements CronField, JsonSerializable
         };
     }
 
+    /**
+     * @throws SyntaxError
+     */
     final protected function wrapValidate(string $expression, string $sourceExpression): void
     {
         try {
             $this->validate($expression);
-        } catch (SyntaxError $exception) {
+        } catch (CronError $exception) {
             throw SyntaxError::dueToInvalidFieldExpression($sourceExpression, $this::class, $exception);
         }
     }
