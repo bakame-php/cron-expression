@@ -2,6 +2,24 @@
 
 All Notable changes to `cron` will be documented in this file
 
+## [Next] - TBD
+
+### Added
+
+- `Direction` enum
+
+### Fixed
+
+- None
+
+### Deprecate
+
+- None
+
+### Removed
+
+- None
+
 ## [0.5.1] - 2022-01-11
 
 ### Added

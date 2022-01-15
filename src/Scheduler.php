@@ -12,9 +12,6 @@ use Throwable;
 
 final class Scheduler implements CronScheduler
 {
-    private const FORWARD = 0;
-    private const BACKWARD = 1;
-
     private Expression $expression;
     private DateTimeZone $timezone;
 
@@ -24,6 +21,10 @@ final class Scheduler implements CronScheduler
     private array $calculatedFields;
     private bool $includeDayOfWeekAndDayOfMonthExpression;
 
+    /**
+     * @param privateStartDatePresence $startDatePresence
+     * @throws CronError
+     */
     public function __construct(
         Expression|string $expression,
         DateTimeZone|string $timezone,
@@ -35,6 +36,9 @@ final class Scheduler implements CronScheduler
         $this->initialize();
     }
 
+    /**
+     * @throws CronError
+     */
     private function filterExpression(Expression|string $expression): Expression
     {
         if (!$expression instanceof Expression) {
@@ -55,23 +59,13 @@ final class Scheduler implements CronScheduler
 
     private function initialize(): void
     {
-        static $orderedFields = [
-            ExpressionField::MONTH,
-            ExpressionField::DAY_OF_MONTH,
-            ExpressionField::DAY_OF_WEEK,
-            ExpressionField::HOUR,
-            ExpressionField::MINUTE,
-        ];
-
-        // We don't have to satisfy * fields
-        $this->calculatedFields = [];
-        $expressionFields = $this->expression->fields();
-        foreach ($orderedFields as $field) {
-            $fieldExpression = $expressionFields[$field->value]->toString();
-            if ('*' !== $fieldExpression) {
-                $this->calculatedFields[$field->value] = $expressionFields[$field->value];
-            }
-        }
+        $this->calculatedFields = array_filter([
+            ExpressionField::MONTH->value => $this->expression->month,
+            ExpressionField::DAY_OF_MONTH->value => $this->expression->dayOfMonth,
+            ExpressionField::DAY_OF_WEEK->value => $this->expression->dayOfWeek,
+            ExpressionField::HOUR->value => $this->expression->hour,
+            ExpressionField::MINUTE->value => $this->expression->minute,
+        ], fn (CronField $f): bool => '*' !== $f->toString());
 
         $this->includeDayOfWeekAndDayOfMonthExpression = isset(
             $this->calculatedFields[ExpressionField::DAY_OF_MONTH->value],
@@ -79,11 +73,17 @@ final class Scheduler implements CronScheduler
         );
     }
 
+    /**
+     * @throws CronError
+     */
     public static function fromUTC(Expression|string $expression, StartDatePresence $startDatePresence = StartDatePresence::EXCLUDED): self
     {
         return new self($expression, new DateTimeZone('UTC'), $startDatePresence);
     }
 
+    /**
+     * @throws CronError
+     */
     public static function fromSystemTimezone(Expression|string $expression, StartDatePresence $startDatePresence = StartDatePresence::EXCLUDED): self
     {
         return new self($expression, new DateTimeZone(date_default_timezone_get()), $startDatePresence);
@@ -104,6 +104,9 @@ final class Scheduler implements CronScheduler
         return StartDatePresence::EXCLUDED === $this->startDatePresence;
     }
 
+    /**
+     * @throws CronError
+     */
     public function withExpression(Expression|string $expression): self
     {
         $expression = $this->filterExpression($expression);
@@ -161,7 +164,7 @@ final class Scheduler implements CronScheduler
         try {
             $date = $this->toDateTimeImmutable($when);
 
-            return $this->nextRun($date, StartDatePresence::INCLUDED, self::FORWARD) === $date;
+            return $this->nextRun($date, StartDatePresence::INCLUDED, Direction::FORWARD) === $date;
         } catch (Throwable) {
             return false;
         }
@@ -169,12 +172,12 @@ final class Scheduler implements CronScheduler
 
     public function yieldRunsForward(DateTimeInterface|string $startDate, int $recurrences): Generator
     {
-        return $this->runsFrom($this->toDateTimeImmutable($startDate), $recurrences, self::FORWARD);
+        return $this->runsFrom($this->toDateTimeImmutable($startDate), $recurrences, Direction::FORWARD);
     }
 
     public function yieldRunsBackward(DateTimeInterface|string $endDate, int $recurrences): Generator
     {
-        return $this->runsFrom($this->toDateTimeImmutable($endDate), $recurrences, self::BACKWARD);
+        return $this->runsFrom($this->toDateTimeImmutable($endDate), $recurrences, Direction::BACKWARD);
     }
 
     public function yieldRunsAfter(DateTimeInterface|string $startDate, DateInterval|string $interval): Generator
@@ -243,7 +246,7 @@ final class Scheduler implements CronScheduler
     /**
      * @throws CronError
      */
-    private function runsFrom(DateTimeImmutable $startDate, int $recurrences, int $direction): Generator
+    private function runsFrom(DateTimeImmutable $startDate, int $recurrences, Direction $direction): Generator
     {
         if (0 > $recurrences) {
             throw SyntaxError::dueToNegativeRecurrences();
@@ -253,8 +256,8 @@ final class Scheduler implements CronScheduler
         $run = $startDate;
         $startDatePresence = $this->startDatePresence;
         $modifier = match ($direction) {
-            self::BACKWARD => $this->expression->minute->decrement(...),
-            default => $this->expression->minute->increment(...),
+            Direction::BACKWARD => $this->expression->minute->decrement(...),
+            Direction::FORWARD => $this->expression->minute->increment(...),
         };
         while ($i < $recurrences) {
             yield $this->nextRun($run, $startDatePresence, $direction);
@@ -277,7 +280,7 @@ final class Scheduler implements CronScheduler
         $startDatePresence = $this->startDatePresence;
         $run = $startDate;
         while ($endDate > $run) {
-            $run = $this->nextRun($startDate, $startDatePresence, self::FORWARD);
+            $run = $this->nextRun($startDate, $startDatePresence, Direction::FORWARD);
             if ($endDate < $run) {
                 break;
             }
@@ -301,7 +304,7 @@ final class Scheduler implements CronScheduler
         $startDatePresence = $this->startDatePresence;
         $run = $endDate;
         while ($startDate < $run) {
-            $run = $this->nextRun($endDate, $startDatePresence, self::BACKWARD);
+            $run = $this->nextRun($endDate, $startDatePresence, Direction::BACKWARD);
             if ($startDate > $run) {
                 break;
             }
@@ -318,15 +321,15 @@ final class Scheduler implements CronScheduler
      *
      * @throws CronError
      */
-    private function nextRun(DateTimeImmutable $date, StartDatePresence $startDatePresence, int $direction): DateTimeImmutable
+    private function nextRun(DateTimeImmutable $date, StartDatePresence $startDatePresence, Direction $direction): DateTimeImmutable
     {
         if ($this->includeDayOfWeekAndDayOfMonthExpression) {
             return $this->dayOfWeekAndDayOfMonthNextRun($date, $direction);
         }
 
         $modifier = match ($direction) {
-            self::BACKWARD => $this->expression->minute->decrement(...),
-            default => $this->expression->minute->increment(...),
+            Direction::BACKWARD => $this->expression->minute->decrement(...),
+            Direction::FORWARD => $this->expression->minute->increment(...),
         };
 
         $nextRun = $date;
@@ -335,8 +338,8 @@ final class Scheduler implements CronScheduler
             foreach ($this->calculatedFields as $field) {
                 if (!$field->isSatisfiedBy($nextRun)) {
                     $nextRun = match ($direction) {
-                        self::BACKWARD => $field->decrement($nextRun),
-                        default => $field->increment($nextRun),
+                        Direction::BACKWARD => $field->decrement($nextRun),
+                        Direction::FORWARD => $field->increment($nextRun),
                     };
                     goto start;
                 }
@@ -355,17 +358,17 @@ final class Scheduler implements CronScheduler
      *
      * @throws CronError
      */
-    private function dayOfWeekAndDayOfMonthNextRun(DateTimeImmutable $startDate, int $direction): DateTimeImmutable
+    private function dayOfWeekAndDayOfMonthNextRun(DateTimeImmutable $startDate, Direction $direction): DateTimeImmutable
     {
         $dayOfWeekScheduler = $this->withExpression($this->expression->withDayOfWeek('*'));
         $dayOfMonthScheduler = $this->withExpression($this->expression->withDayOfMonth('*'));
 
         $combinedRuns = match ($direction) {
-            self::BACKWARD => array_merge(
+            Direction::BACKWARD => array_merge(
                 iterator_to_array($dayOfMonthScheduler->yieldRunsBackward($startDate, 1), false),
                 iterator_to_array($dayOfWeekScheduler->yieldRunsBackward($startDate, 1), false)
             ),
-            default => array_merge(
+            Direction::FORWARD => array_merge(
                 iterator_to_array($dayOfMonthScheduler->yieldRunsForward($startDate, 1), false),
                 iterator_to_array($dayOfWeekScheduler->yieldRunsForward($startDate, 1), false)
             ),
@@ -373,7 +376,7 @@ final class Scheduler implements CronScheduler
 
         usort(
             $combinedRuns,
-            self::BACKWARD === $direction ?
+            Direction::BACKWARD === $direction ?
                 fn (DateTimeInterface $a, DateTimeInterface $b): int => $b <=> $a :
                 fn (DateTimeInterface $a, DateTimeInterface $b): int => $a <=> $b
         );
