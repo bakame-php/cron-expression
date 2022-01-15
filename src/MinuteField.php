@@ -30,7 +30,7 @@ final class MinuteField extends Field
         }
 
         $currentMinute = (int) $date->format('i');
-        $minute = $this->computeTimeFieldRangeValue($currentMinute, $this->field, false);
+        $minute = $this->computeTimeFieldRangeValue($currentMinute, $this->field, Direction::FORWARD);
         if ($currentMinute < $minute) {
             return $date->add(new DateInterval('PT'.($minute - $currentMinute).'M'));
         }
@@ -46,7 +46,7 @@ final class MinuteField extends Field
         }
 
         $currentMinute = (int) $date->format('i');
-        $minute = $this->computeTimeFieldRangeValue($currentMinute, $this->field, true);
+        $minute = $this->computeTimeFieldRangeValue($currentMinute, $this->field, Direction::BACKWARD);
         if ($minute < $currentMinute) {
             return $date->sub(new DateInterval('PT'.($currentMinute - $minute).'M'));
         }

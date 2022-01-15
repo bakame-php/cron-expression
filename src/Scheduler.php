@@ -14,6 +14,7 @@ final class Scheduler implements CronScheduler
 {
     private Expression $expression;
     private DateTimeZone $timezone;
+    private StartDatePresence $startDatePresence;
 
     /** Internal variables to optimize runs calculation */
 
@@ -22,16 +23,16 @@ final class Scheduler implements CronScheduler
     private bool $includeDayOfWeekAndDayOfMonthExpression;
 
     /**
-     * @param privateStartDatePresence $startDatePresence
      * @throws CronError
      */
     public function __construct(
         Expression|string $expression,
         DateTimeZone|string $timezone,
-        private StartDatePresence $startDatePresence
+        StartDatePresence $startDatePresence
     ) {
         $this->expression = $this->filterExpression($expression);
         $this->timezone = $this->filterTimezone($timezone);
+        $this->startDatePresence = $startDatePresence;
 
         $this->initialize();
     }

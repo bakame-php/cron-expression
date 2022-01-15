@@ -32,7 +32,7 @@ final class HourField extends Field
         }
 
         $currentHour = (int) $date->format('H');
-        $hour = $this->computeTimeFieldRangeValue($currentHour, $this->field, false);
+        $hour = $this->computeTimeFieldRangeValue($currentHour, $this->field, Direction::FORWARD);
         if ($hour < $currentHour) {
             return $date->setTime(0, 0)->add(new DateInterval('P1D'));
         }
@@ -49,7 +49,7 @@ final class HourField extends Field
         }
 
         $currentHour = (int) $date->format('H');
-        $hour = $this->computeTimeFieldRangeValue($currentHour, $this->field, true);
+        $hour = $this->computeTimeFieldRangeValue($currentHour, $this->field, Direction::BACKWARD);
         if ($hour > $currentHour) {
             return $date->setTime(0, 0)->sub(new DateInterval('PT1M'));
         }

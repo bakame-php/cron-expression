@@ -200,7 +200,7 @@ abstract class Field implements CronField, JsonSerializable
         return (string) $key;
     }
 
-    protected function computeTimeFieldRangeValue(int $currentValue, string $fieldExpression, bool $invert): int
+    protected function computeTimeFieldRangeValue(int $currentValue, string $fieldExpression, Direction $direction): int
     {
         /** @var array<int> $ranges */
         $ranges = array_reduce(
@@ -209,7 +209,7 @@ abstract class Field implements CronField, JsonSerializable
             []
         );
 
-        return $ranges[$this->computeTimeFieldRangeOffset($currentValue, $ranges, $invert)];
+        return $ranges[$this->computeTimeFieldRangeOffset($currentValue, $ranges, $direction)];
     }
 
     /**
@@ -236,18 +236,18 @@ abstract class Field implements CronField, JsonSerializable
         return $this->activeRanges((int) $offset, (int) $to, (int) $step);
     }
 
-    protected function computeTimeFieldRangeOffset(int $currentValue, array $references, bool $invert): int
+    protected function computeTimeFieldRangeOffset(int $currentValue, array $references, Direction $direction): int
     {
         $nbField = count($references);
-        $position = $invert ? $nbField - 1 : 0;
+        $position = $direction === Direction::BACKWARD ? $nbField - 1 : 0;
         if ($nbField <= 1) {
             return $position;
         }
 
         for ($i = 0; $i < $nbField - 1; $i++) {
-            if ((!$invert && $currentValue >= $references[$i] && $currentValue < $references[$i + 1]) ||
-                ($invert && $currentValue > $references[$i] && $currentValue <= $references[$i + 1])) {
-                return $invert ? $i : $i + 1;
+            if ((Direction::FORWARD === $direction && $currentValue >= $references[$i] && $currentValue < $references[$i + 1]) ||
+                (Direction::BACKWARD === $direction && $currentValue > $references[$i] && $currentValue <= $references[$i + 1])) {
+                return Direction::BACKWARD === $direction ? $i : $i + 1;
             }
         }
 
