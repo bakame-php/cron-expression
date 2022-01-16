@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Bakame\Cron;
 
 use DateInterval;
-use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 
@@ -35,20 +34,19 @@ final class DayOfMonthField extends Field
     /**
      * Get the nearest day of the week for a given day in a month.
      */
-    private static function isNearestWeekday(DateTimeInterface $date, string $fieldExpression, int $position): bool
+    private static function isNearestWeekday(DateTimeInterface $date, int $targetDay): bool
     {
         $currentYear = (int) $date->format('Y');
         $currentMonth = (int) $date->format('m');
-        $targetDay = (int) substr($fieldExpression, 0, $position);
 
-        /** @var DateTime $target */
-        $target = DateTime::createFromFormat('Y-n-j', "$currentYear-$currentMonth-$targetDay");
+        /** @var DateTimeImmutable $target */
+        $target = DateTimeImmutable::createFromFormat('Y-n-j', "$currentYear-$currentMonth-$targetDay");
         $lastDayOfMonth = (int) $target->format('t');
         foreach ([0, -1, 1, -2, 2] as $i) {
             $adjusted = $targetDay + $i;
             if ($adjusted > 0 && $adjusted <= $lastDayOfMonth) {
-                $target->setDate($currentYear, $currentMonth, $adjusted);
-                if (6 > (int) $target->format('N') && (int) $target->format('m') == $currentMonth) {
+                $target = $target->setDate($currentYear, $currentMonth, $adjusted);
+                if (6 > (int) $target->format('N') && $currentMonth === (int) $target->format('m')) {
                     break;
                 }
             }
@@ -64,7 +62,7 @@ final class DayOfMonthField extends Field
         return match (true) {
             '?' === $fieldExpression => true,
             'L' === $fieldExpression => $fieldValue === $date->format('t'),
-            false !== ($position = strpos($fieldExpression, 'W')) => self::isNearestWeekday($date, $fieldExpression, $position),
+            false !== ($position = strpos($fieldExpression, 'W')) => self::isNearestWeekday($date, (int) substr($fieldExpression, 0, $position)),
             default => $this->isSatisfied((int) $fieldValue, $fieldExpression),
         };
     }

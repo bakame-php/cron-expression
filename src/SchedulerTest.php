@@ -7,6 +7,7 @@ namespace Bakame\Cron;
 use DateInterval;
 use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 
@@ -179,6 +180,13 @@ final class SchedulerTest extends TestCase
         self::assertTrue($cronTok->isDue(new DateTime($date, $tokyo)));
     }
 
+    public function testItFailsWithAWrongTimezone(): void
+    {
+        $this->expectException(SyntaxError::class);
+
+        new Scheduler('* * * * *', 'Foo/Bar', StartDatePresence::EXCLUDED);
+    }
+
     public function testCanGetPreviousRunDates(): void
     {
         $scheduler = Scheduler::fromSystemTimezone('* * * * *');
@@ -321,10 +329,10 @@ final class SchedulerTest extends TestCase
     public function testKeepOriginalTime(): void
     {
         $now = new DateTime();
-        $strNow = $now->format(DateTime::ISO8601);
+        $strNow = $now->format(DateTimeInterface::ISO8601);
         $cron = Scheduler::fromSystemTimezone(Expression::fromString('0 0 * * *'));
         $cron->run($now, -1);
-        self::assertSame($strNow, $now->format(DateTime::ISO8601));
+        self::assertSame($strNow, $now->format(DateTimeInterface::ISO8601));
     }
 
     public function testUpdateExpressionPartReturnsTheSameInstance(): void

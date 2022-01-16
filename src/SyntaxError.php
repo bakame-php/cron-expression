@@ -29,8 +29,14 @@ final class SyntaxError extends InvalidArgumentException implements CronError
             $date = $date->format('c');
         }
 
-        return new self("The string `$date` is not a valid `DateTimeImmutable:::__construct` input.", $exception);
+        return new self("The string `$date` is not a valid `DateTimeImmutable::__construct` input.", $exception);
     }
+
+    public static function dueToInvalidDateTimeZoneString(string $timezone, Throwable $exception): self
+    {
+        return new self("The string `$timezone` is an unknown or a bad timezone name.", $exception);
+    }
+
 
     public static function dueToInvalidDateIntervalString(string $interval): self
     {

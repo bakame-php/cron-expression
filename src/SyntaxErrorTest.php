@@ -28,6 +28,6 @@ class SyntaxErrorTest extends TestCase
 
         $exception = SyntaxError::dueToInvalidDateString($date, new LogicException());
 
-        self::assertSame("The string `{$date->format('c')}` is not a valid `DateTimeImmutable:::__construct` input.", $exception->getMessage());
+        self::assertSame("The string `{$date->format('c')}` is not a valid `DateTimeImmutable::__construct` input.", $exception->getMessage());
     }
 }

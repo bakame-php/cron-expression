@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Bakame\Cron;
 
 use DateInterval;
-use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 
@@ -54,9 +53,9 @@ final class DayOfWeekField extends Field
         $pos = strpos($fieldExpression, 'L');
         if (false !== $pos) {
             $weekday = $this->convertLiterals(str_replace('7', '0', substr($fieldExpression, 0, $pos)));
-            $tempDate = DateTime::createFromInterface($date)->setDate($currentYear, $currentMonth, $lastDayOfMonth);
+            $tempDate = DateTimeImmutable::createFromInterface($date)->setDate($currentYear, $currentMonth, $lastDayOfMonth);
             while ($tempDate->format('w') !== $weekday) {
-                $tempDate->setDate($currentYear, $currentMonth, --$lastDayOfMonth);
+                $tempDate = $tempDate->setDate($currentYear, $currentMonth, --$lastDayOfMonth);
             }
 
             return $date->format('j') == $lastDayOfMonth;
@@ -77,7 +76,7 @@ final class DayOfWeekField extends Field
                 return false;
             }
 
-            $tempDate = DateTime::createFromInterface($date)->setDate($currentYear, $currentMonth, 1);
+            $tempDate = DateTimeImmutable::createFromInterface($date)->setDate($currentYear, $currentMonth, 1);
             $dayCount = 0;
             $currentDay = 1;
             while ($currentDay < $lastDayOfMonth + 1) {
@@ -86,7 +85,7 @@ final class DayOfWeekField extends Field
                         break;
                     }
                 }
-                $tempDate->setDate($currentYear, $currentMonth, ++$currentDay);
+                $tempDate = $tempDate->setDate($currentYear, $currentMonth, ++$currentDay);
             }
 
             return (int) $date->format('j') === $currentDay;

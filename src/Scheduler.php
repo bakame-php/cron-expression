@@ -3,10 +3,10 @@
 namespace Bakame\Cron;
 
 use DateInterval;
-use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Exception;
 use Generator;
 use Throwable;
 
@@ -49,13 +49,20 @@ final class Scheduler implements CronScheduler
         return $expression;
     }
 
+    /**
+     * @throws CronError
+     */
     private function filterTimezone(DateTimeZone|string $timezone): DateTimeZone
     {
-        if (!$timezone instanceof DateTimeZone) {
-            return new DateTimeZone($timezone);
+        if ($timezone instanceof DateTimeZone) {
+            return $timezone;
         }
 
-        return $timezone;
+        try {
+            return new DateTimeZone($timezone);
+        } catch (Exception $exception) {
+            throw SyntaxError::dueToInvalidDateTimeZoneString($timezone, $exception);
+        }
     }
 
     private function initialize(): void
@@ -118,6 +125,9 @@ final class Scheduler implements CronScheduler
         return new self($expression, $this->timezone, $this->startDatePresence);
     }
 
+    /**
+     * @throws CronError
+     */
     public function withTimezone(DateTimeZone|string $timezone): self
     {
         $timezone = $this->filterTimezone($timezone);
@@ -215,7 +225,7 @@ final class Scheduler implements CronScheduler
         try {
             $currentDate = match (true) {
                 $date instanceof DateTimeImmutable => $date,
-                $date instanceof DateTime => DateTimeImmutable::createFromInterface($date),
+                $date instanceof DateTimeInterface => DateTimeImmutable::createFromInterface($date),
                 default => new DateTimeImmutable($date),
             };
             $currentDate = $currentDate->setTimezone($this->timezone);
