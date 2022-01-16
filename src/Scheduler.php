@@ -66,7 +66,7 @@ final class Scheduler implements CronScheduler
             ExpressionField::DAY_OF_WEEK->value => $this->expression->dayOfWeek,
             ExpressionField::HOUR->value => $this->expression->hour,
             ExpressionField::MINUTE->value => $this->expression->minute,
-        ], fn (CronField $f): bool => '*' !== $f->toString());
+        ], fn (CronField $f): bool => !in_array($f->toString(), ['*', '?'], true));
 
         $this->includeDayOfWeekAndDayOfMonthExpression = isset(
             $this->calculatedFields[ExpressionField::DAY_OF_MONTH->value],

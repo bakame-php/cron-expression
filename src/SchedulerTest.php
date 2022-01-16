@@ -659,4 +659,49 @@ final class SchedulerTest extends TestCase
         );
         self::assertSame(['2010-01-02 00:05:00'], $res);
     }
+
+    public function testIssue128(): void
+    {
+        $scheduler = Scheduler::fromSystemTimezone('0 20 L 6,12 ?');
+
+        $expected = new DateTimeImmutable('2022-12-31 20:00:00');
+        $next = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'));
+        self::assertEquals($expected, $next);
+
+        $expected = new DateTimeImmutable('2023-12-31 20:00:00');
+        $next = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'), 2);
+        self::assertEquals($expected, $next);
+
+        $expected = new DateTimeImmutable('2022-06-30 20:00:00');
+        $prev = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'), -1);
+        self::assertEquals($expected, $prev);
+
+        $expected = new DateTimeImmutable('2021-12-31 20:00:00');
+        $prev = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'), -2);
+        self::assertEquals($expected, $prev);
+
+        $scheduler = Scheduler::fromSystemTimezone('0 20 L 6,12 0-6');
+
+        $expected = new DateTimeImmutable('2022-12-01 20:00:00');
+        $next = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'));
+        self::assertEquals($expected, $next);
+
+        $expected = new DateTimeImmutable('2022-12-02 20:00:00');
+        $next = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'), 1);
+        self::assertEquals($expected, $next);
+
+        $expected = new DateTimeImmutable('2022-12-03 20:00:00');
+        $next = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'), 2);
+        self::assertEquals($expected, $next);
+
+        $scheduler = Scheduler::fromSystemTimezone('0 20 * 6,12 *');
+
+        $expected = new DateTimeImmutable('2022-12-01 20:00:00');
+        $next = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'));
+        self::assertEquals($expected, $next);
+
+        $expected = new DateTimeImmutable('2022-12-06 20:00:00');
+        $next = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'), 5);
+        self::assertEquals($expected, $next);
+    }
 }

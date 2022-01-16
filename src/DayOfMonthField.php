@@ -39,7 +39,6 @@ final class DayOfMonthField extends Field
     {
         $currentYear = (int) $date->format('Y');
         $currentMonth = (int) $date->format('m');
-        $currentDay = $date->format('j');
         $targetDay = (int) substr($fieldExpression, 0, $position);
 
         /** @var DateTime $target */
@@ -55,7 +54,7 @@ final class DayOfMonthField extends Field
             }
         }
 
-        return $target->format('j') === $currentDay;
+        return $target->format('j') === $date->format('j');
     }
 
     protected function isExpressionSatisfiedBy(string $fieldExpression, DateTimeInterface $date): bool
