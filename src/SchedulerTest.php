@@ -712,4 +712,12 @@ final class SchedulerTest extends TestCase
         $next = $scheduler->run(new DateTimeImmutable('2022-08-20 03:44:02'), 5);
         self::assertEquals($expected, $next);
     }
+
+    public function testDSTFixForDateIntervalUpdates(): void
+    {
+        $tz = new DateTimeZone('Europe/London');
+        $scheduler = new Scheduler('0 1 * * 0', $tz, StartDatePresence::INCLUDED);
+
+        self::assertSame('2021-03-21T01:00:00+00:00', $scheduler->run(new DateTimeImmutable('2021-03-28 14:55:03', $tz), -1)->format('c'));
+    }
 }

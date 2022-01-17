@@ -54,6 +54,11 @@ final class HourField extends Field
             return $date->setTime(0, 0)->sub(new DateInterval('PT1M'));
         }
 
-        return $date->setTime($hour, 59);
+        $res = $date->setTime($hour, 59);
+        if ($res != $date) {
+            return $res;
+        }
+
+        return $date->setTime($hour - 1, 59);
     }
 }
