@@ -68,16 +68,16 @@ final class Scheduler implements CronScheduler
     private function initialize(): void
     {
         $this->calculatedFields = array_filter([
-            ExpressionField::MONTH->value => $this->expression->month,
-            ExpressionField::DAY_OF_MONTH->value => $this->expression->dayOfMonth,
-            ExpressionField::DAY_OF_WEEK->value => $this->expression->dayOfWeek,
-            ExpressionField::HOUR->value => $this->expression->hour,
-            ExpressionField::MINUTE->value => $this->expression->minute,
+            Field::MONTH->value => $this->expression->month,
+            Field::DAY_OF_MONTH->value => $this->expression->dayOfMonth,
+            Field::DAY_OF_WEEK->value => $this->expression->dayOfWeek,
+            Field::HOUR->value => $this->expression->hour,
+            Field::MINUTE->value => $this->expression->minute,
         ], fn (CronField $f): bool => !in_array($f->toString(), ['*', '?'], true));
 
         $this->includeDayOfWeekAndDayOfMonthExpression = isset(
-            $this->calculatedFields[ExpressionField::DAY_OF_MONTH->value],
-            $this->calculatedFields[ExpressionField::DAY_OF_WEEK->value]
+            $this->calculatedFields[Field::DAY_OF_MONTH->value],
+            $this->calculatedFields[Field::DAY_OF_WEEK->value]
         );
     }
 

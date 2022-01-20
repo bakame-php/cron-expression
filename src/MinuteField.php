@@ -11,7 +11,7 @@ use DateTimeInterface;
 /**
  * Minutes field.  Allows: * , / -.
  */
-final class MinuteField extends Field
+final class MinuteField extends ExpressionField
 {
     protected const RANGE_START = 0;
     protected const RANGE_END = 59;

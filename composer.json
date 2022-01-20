@@ -35,7 +35,10 @@
     "autoload": {
         "psr-4": {
             "Bakame\\Cron\\": "src/"
-        }
+        },
+        "exclude-from-classmap": [
+          "src/**Test.php"
+        ]
     },
     "scripts": {
         "phpcs": "php-cs-fixer fix -vvv --diff --dry-run --allow-risky=yes --ansi",

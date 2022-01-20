@@ -324,7 +324,7 @@ echo $cron->hour->toString();       //displays '6-12'
 echo $cron->dayOfMonth->toString(); //displays '*/15'
 echo $cron->month->toString();      //displays '1'
 echo $cron->dayOfWeek->toString();  //displays '2-5'
-var_export($cron->toArray());
+var_export($cron->toFields());
 // returns
 // array (
 //   'minute' => '3-59/15',
@@ -335,7 +335,7 @@ var_export($cron->toArray());
 // )
 ```
 
-`Expression::fromFields` returns a new instance from an associative array using the same index as the one returned by `Expression::toArray`.
+`Expression::fromFields` returns a new instance from an associative array using the same index as the one returned by `Expression::toFields`.
 
 ```php
 <?php
@@ -373,12 +373,10 @@ echo json_encode($cron->hour);  //display '"6-12"'
 echo $cron->toString();  //display '3-59/15 6-12 */15 1 2-5'
 echo json_encode($cron); //display '"3-59\/15 6-12 *\/15 1 2-5"'
 
-echo json_encode($cron->fields());  //display '{"minute":"3-59\/15","hour":"6-12","dayOfMonth":"*\/15","month":"1","dayOfWeek":"2-5"}'
-echo json_encode($cron->toArray());  //display '{"minute":"3-59\/15","hour":"6-12","dayOfMonth":"*\/15","month":"1","dayOfWeek":"2-5"}'
+echo json_encode($cron->toFields());  //display '{"minute":"3-59\/15","hour":"6-12","dayOfMonth":"*\/15","month":"1","dayOfWeek":"2-5"}'
 ```
 
-- The `Expression::fields` returns an associative array of CRON expression field `CronField` objects representation;
-- The `Expression::toArray` returns an associative array of CRON expression field string representation;
+- The `Expression::toFields` returns an associative array of CRON expression field string representation;
 
 **Both methods produce the same JSON output string**
 

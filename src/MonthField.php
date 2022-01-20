@@ -11,7 +11,7 @@ use DateTimeInterface;
 /**
  * Month field.  Allows: * , / -.
  */
-final class MonthField extends Field
+final class MonthField extends ExpressionField
 {
     protected const RANGE_START = 1;
     protected const RANGE_END = 12;

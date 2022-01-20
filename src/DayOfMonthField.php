@@ -26,7 +26,7 @@ use DateTimeInterface;
  *
  * @author Michael Dowling <mtdowling@gmail.com>
  */
-final class DayOfMonthField extends Field
+final class DayOfMonthField extends ExpressionField
 {
     protected const RANGE_START = 1;
     protected const RANGE_END = 31;

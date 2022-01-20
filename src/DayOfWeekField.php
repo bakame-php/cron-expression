@@ -21,7 +21,7 @@ use DateTimeInterface;
  * number between one and five. It allows you to specify constructs such as
  * "the second Friday" of a given month.
  */
-final class DayOfWeekField extends Field
+final class DayOfWeekField extends ExpressionField
 {
     protected const RANGE_START = 0;
     protected const RANGE_END = 7;

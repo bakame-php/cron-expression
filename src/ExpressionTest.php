@@ -22,7 +22,7 @@ final class ExpressionTest extends TestCase
         self::assertSame('*/3', $cron->dayOfWeek->toString());
         self::assertSame('1 2-4 * 4,5,6 */3', $cron->toString());
         self::assertSame('1 2-4 * 4,5,6 */3', $cron->toString());
-        self::assertSame(['1', '2-4', '*', '4,5,6', '*/3'], array_values(array_map(fn (CronField $f): string => $f->toString(), $cron->fields())));
+        self::assertSame(['minute' => '1', 'hour' => '2-4', 'dayOfMonth' => '*', 'month' => '4,5,6', 'dayOfWeek' => '*/3'], $cron->toFields());
         self::assertSame('"1 2-4 * 4,5,6 *\/3"', json_encode($cron));
     }
 

@@ -11,7 +11,7 @@ use DateTimeInterface;
 /**
  * Hours field.  Allows: * , / -.
  */
-final class HourField extends Field
+final class HourField extends ExpressionField
 {
     protected const RANGE_START = 0;
     protected const RANGE_END = 23;

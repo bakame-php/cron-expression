@@ -149,11 +149,11 @@ final class Expression implements JsonSerializable
     {
         static $defaultValues;
         $defaultValues ??= [
-            ExpressionField::MINUTE->value =>'*',
-            ExpressionField::HOUR->value => '*',
-            ExpressionField::DAY_OF_MONTH->value => '*',
-            ExpressionField::MONTH->value => '*',
-            ExpressionField::DAY_OF_WEEK->value => '*',
+            Field::MINUTE->value =>'*',
+            Field::HOUR->value => '*',
+            Field::DAY_OF_MONTH->value => '*',
+            Field::MONTH->value => '*',
+            Field::DAY_OF_WEEK->value => '*',
         ];
 
         if ([] !== array_diff_key($fields, $defaultValues)) {
@@ -166,38 +166,28 @@ final class Expression implements JsonSerializable
         );
 
         return new self(
-            new MinuteField($fields[ExpressionField::MINUTE->value]),
-            new HourField($fields[ExpressionField::HOUR->value]),
-            new DayOfMonthField($fields[ExpressionField::DAY_OF_MONTH->value]),
-            new MonthField($fields[ExpressionField::MONTH->value]),
-            new DayOfWeekField($fields[ExpressionField::DAY_OF_WEEK->value]),
+            new MinuteField($fields[Field::MINUTE->value]),
+            new HourField($fields[Field::HOUR->value]),
+            new DayOfMonthField($fields[Field::DAY_OF_MONTH->value]),
+            new MonthField($fields[Field::MONTH->value]),
+            new DayOfWeekField($fields[Field::DAY_OF_WEEK->value]),
         );
-    }
-
-    /**
-     * Returns the CRON expression Fields object in an associative array.
-     *
-     * @return array{minute:MinuteField, hour:HourField, dayOfMonth:DayOfMonthField, month:MonthField, dayOfWeek:DayOfWeekField}
-     */
-    public function fields(): array
-    {
-        return [
-            ExpressionField::MINUTE->value => $this->minute,
-            ExpressionField::HOUR->value => $this->hour,
-            ExpressionField::DAY_OF_MONTH->value => $this->dayOfMonth,
-            ExpressionField::MONTH->value => $this->month,
-            ExpressionField::DAY_OF_WEEK->value => $this->dayOfWeek,
-        ];
     }
 
     /**
      * Returns the CRON expression Fields string in an associative array.
      *
-     * @return array<string>
+     * @return array{minute:string, hour:string, dayOfMonth:string, month:string, dayOfWeek:string}
      */
-    public function toArray(): array
+    public function toFields(): array
     {
-        return array_map(fn (CronField $f): string => $f->toString(), $this->fields());
+        return array_map(fn (CronField $f): string => $f->toString(), [
+            Field::MINUTE->value => $this->minute,
+            Field::HOUR->value => $this->hour,
+            Field::DAY_OF_MONTH->value => $this->dayOfMonth,
+            Field::MONTH->value => $this->month,
+            Field::DAY_OF_WEEK->value => $this->dayOfWeek,
+        ]);
     }
 
     /**
@@ -205,7 +195,7 @@ final class Expression implements JsonSerializable
      */
     public function toString(): string
     {
-        return implode(' ', $this->toArray());
+        return implode(' ', $this->toFields());
     }
 
     public function jsonSerialize(): string

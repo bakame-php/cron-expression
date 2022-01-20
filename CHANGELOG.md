@@ -7,10 +7,12 @@ All Notable changes to `cron` will be documented in this file
 ### Added
 
 - `Direction` enum
+- `Expression::toFields` method which returns the CRON expression fields as an associative array of strings.
 
 ### Fixed
 
-- None
+- **[BC Break]** `ExpressionField` represents the generic Expression Field abstract class
+- **[BC Break]** `Fields` is the enum representing CRON expression field names.
 
 ### Deprecate
 
@@ -18,7 +20,8 @@ All Notable changes to `cron` will be documented in this file
 
 ### Removed
 
-- None
+- `Expression::fields` method, use `Expression::toFields` method instead
+- `Expression::toArray` method, replaced by `Expression::toFields` method
 
 ## [0.5.1] - 2022-01-11
 
