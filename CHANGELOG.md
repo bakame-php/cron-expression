@@ -14,7 +14,7 @@ All Notable changes to `cron` will be documented in this file
 - **[BC Break]** `ExpressionField` represents the generic Expression Field abstract class
 - **[BC Break]** `Fields` is the enum representing CRON expression field names.
 - **[BC Break]** `ExpressionAliasError` renamed `AliasError`
-- **[BC Break]** `StartDatePresence` enum renamed `InitialDatePresence`
+- **[BC Break]** `StartDatePresence` enum renamed `DatePresence`
 
 ### Deprecate
 

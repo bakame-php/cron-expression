@@ -14,7 +14,7 @@ final class Scheduler implements CronScheduler
 {
     private Expression $expression;
     private DateTimeZone $timezone;
-    private InitialDatePresence $initialDatePresence;
+    private DatePresence $initialDatePresence;
 
     /** Internal variables to optimize runs calculation */
 
@@ -28,7 +28,7 @@ final class Scheduler implements CronScheduler
     public function __construct(
         Expression|string $expression,
         DateTimeZone|string $timezone,
-        InitialDatePresence $initialDatePresence
+        DatePresence $initialDatePresence
     ) {
         $this->expression = $this->filterExpression($expression);
         $this->timezone = $this->filterTimezone($timezone);
@@ -84,7 +84,7 @@ final class Scheduler implements CronScheduler
     /**
      * @throws CronError
      */
-    public static function fromUTC(Expression|string $expression, InitialDatePresence $initialDatePresence = InitialDatePresence::EXCLUDED): self
+    public static function fromUTC(Expression|string $expression, DatePresence $initialDatePresence = DatePresence::EXCLUDED): self
     {
         return new self($expression, new DateTimeZone('UTC'), $initialDatePresence);
     }
@@ -92,7 +92,7 @@ final class Scheduler implements CronScheduler
     /**
      * @throws CronError
      */
-    public static function fromSystemTimezone(Expression|string $expression, InitialDatePresence $initialDatePresence = InitialDatePresence::EXCLUDED): self
+    public static function fromSystemTimezone(Expression|string $expression, DatePresence $initialDatePresence = DatePresence::EXCLUDED): self
     {
         return new self($expression, new DateTimeZone(date_default_timezone_get()), $initialDatePresence);
     }
@@ -109,7 +109,7 @@ final class Scheduler implements CronScheduler
 
     public function isStartDateExcluded(): bool
     {
-        return InitialDatePresence::EXCLUDED === $this->initialDatePresence;
+        return DatePresence::EXCLUDED === $this->initialDatePresence;
     }
 
     /**
@@ -140,20 +140,20 @@ final class Scheduler implements CronScheduler
 
     public function includeStartDate(): self
     {
-        if (InitialDatePresence::INCLUDED === $this->initialDatePresence) {
+        if (DatePresence::INCLUDED === $this->initialDatePresence) {
             return $this;
         }
 
-        return new self($this->expression, $this->timezone, InitialDatePresence::INCLUDED);
+        return new self($this->expression, $this->timezone, DatePresence::INCLUDED);
     }
 
     public function excludeStartDate(): self
     {
-        if (InitialDatePresence::EXCLUDED === $this->initialDatePresence) {
+        if (DatePresence::EXCLUDED === $this->initialDatePresence) {
             return $this;
         }
 
-        return new self($this->expression, $this->timezone, InitialDatePresence::EXCLUDED);
+        return new self($this->expression, $this->timezone, DatePresence::EXCLUDED);
     }
 
     public function run(DateTimeInterface|string $startDate, int $nth = 0): DateTimeImmutable
@@ -175,7 +175,7 @@ final class Scheduler implements CronScheduler
         try {
             $date = $this->toDateTimeImmutable($when);
 
-            return $this->nextRun($date, InitialDatePresence::INCLUDED, Direction::FORWARD) === $date;
+            return $this->nextRun($date, DatePresence::INCLUDED, Direction::FORWARD) === $date;
         } catch (Throwable) {
             return false;
         }
@@ -274,7 +274,7 @@ final class Scheduler implements CronScheduler
             yield $this->nextRun($run, $initialDatePresence, $direction);
 
             $run = $modifier($this->nextRun($run, $initialDatePresence, $direction));
-            $initialDatePresence = InitialDatePresence::INCLUDED;
+            $initialDatePresence = DatePresence::INCLUDED;
             ++$i;
         }
     }
@@ -299,7 +299,7 @@ final class Scheduler implements CronScheduler
             yield $run;
 
             $startDate = $this->expression->minute->increment($run);
-            $initialDatePresence = InitialDatePresence::INCLUDED;
+            $initialDatePresence = DatePresence::INCLUDED;
         }
     }
 
@@ -323,7 +323,7 @@ final class Scheduler implements CronScheduler
             yield $run;
 
             $endDate = $this->expression->minute->decrement($run);
-            $initialDatePresence = InitialDatePresence::INCLUDED;
+            $initialDatePresence = DatePresence::INCLUDED;
         }
     }
 
@@ -332,7 +332,7 @@ final class Scheduler implements CronScheduler
      *
      * @throws CronError
      */
-    private function nextRun(DateTimeImmutable $date, InitialDatePresence $initialDatePresence, Direction $direction): DateTimeImmutable
+    private function nextRun(DateTimeImmutable $date, DatePresence $initialDatePresence, Direction $direction): DateTimeImmutable
     {
         if ($this->includeDayOfWeekAndDayOfMonthExpression) {
             return $this->dayOfWeekAndDayOfMonthNextRun($date, $direction);
@@ -356,7 +356,7 @@ final class Scheduler implements CronScheduler
                 }
             }
 
-            if ($initialDatePresence === InitialDatePresence::INCLUDED || $nextRun !== $date) {
+            if ($initialDatePresence === DatePresence::INCLUDED || $nextRun !== $date) {
                 break;
             }
         } while ($nextRun = $modifier($nextRun));
