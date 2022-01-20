@@ -6,6 +6,7 @@ namespace Bakame\Cron;
 
 use DateTime;
 use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -73,5 +74,23 @@ final class MinuteFieldTest extends TestCase
             ['-1'],
             ['4-5/0'],
         ];
+    }
+
+    /**
+     * @covers ::increment
+     * @covers ::decrement
+     */
+    public function testIncrementAcrossDstChangeBerlin(): void
+    {
+        $d = new DateTimeImmutable('2021-03-28 01:59:00', new DateTimeZone('Europe/Berlin'));
+        $f = new DayOfMonthField('*');
+
+        $resD = $f->increment($d);
+        self::assertSame('2021-03-29 00:00:00', $resD->format('Y-m-d H:i:s'));
+
+        $newD = $f->decrement($resD);
+        self::assertSame('2021-03-28 23:59:00', $newD->format('Y-m-d H:i:s'));
+
+        self::assertSame('2021-03-27 23:59:00', $f->decrement($newD)->format('Y-m-d H:i:s'));
     }
 }

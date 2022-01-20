@@ -720,4 +720,46 @@ final class SchedulerTest extends TestCase
 
         self::assertSame('2021-03-21T01:00:00+00:00', $scheduler->run(new DateTimeImmutable('2021-03-28 14:55:03', $tz), -1)->format('c'));
     }
+
+    public function testBerlinShouldAdvanceProperlyOverDST(): void
+    {
+        $scheduler = new Scheduler('0 0 1 * *', new DateTimeZone('Europe/Berlin'), DatePresence::EXCLUDED);
+        $next = $scheduler->run(new DateTime('2022-10-30', new DateTimeZone('Europe/Berlin')));
+
+        $expected = new DateTimeImmutable('2022-11-01 00:00:00', new DateTimeZone('Europe/Berlin'));
+
+        self::assertEquals($expected, $next);
+    }
+
+    /**
+     * Helps validate additional test cases that were failing as part of #131's fix.
+     *
+     * @see https://github.com/dragonmantank/cron-expression/issues/131
+     */
+    public function testIssue131(): void
+    {
+        $berlin = new DateTimeZone('Europe/Berlin');
+        $scheduler = new Scheduler('* * * * 2', $berlin, DatePresence::EXCLUDED);
+
+        self::assertEquals(
+            new DateTimeImmutable('2020-10-27 00:00:00', $berlin),
+            $scheduler->run(new DateTime('2020-10-23 15:31:45', $berlin))
+        );
+
+        self::assertEquals(
+            new DateTime('2020-10-20 23:59:00', $berlin),
+            $scheduler->run(new DateTime('2020-10-23 15:31:45', $berlin), -1)
+        );
+
+        $schedulerUTC = Scheduler::fromSystemTimezone('15 1 1 9,11 *');
+        self::assertEquals(
+            new DateTime('2022-09-01 01:15:00'),
+            $schedulerUTC->run(new DateTime('2022-08-20 03:44:02'))
+        );
+
+        self::assertEquals(
+            new DateTime('2021-11-01 01:15:00'),
+            $schedulerUTC->run(new DateTime('2022-08-20 03:44:02'), -1)
+        );
+    }
 }

@@ -6,6 +6,7 @@ namespace Bakame\Cron;
 
 use DateTime;
 use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -111,5 +112,29 @@ final class DayOfMonthFieldTest extends TestCase
             ['5W,L'],
             ['1.'],
         ];
+    }
+
+    /**
+     * @covers ::increment
+     * @covers ::decrement
+     */
+    public function testIncrementAcrossDstChangeLondon(): void
+    {
+        $d = new DateTimeImmutable('2021-03-28 00:59:00', new DateTimeZone('Europe/London'));
+        $f = new DayOfMonthField('*');
+
+        $newD = $f->increment($d);
+        self::assertSame('2021-03-29 00:00:00', $newD->format('Y-m-d H:i:s'));
+
+        $resD = $f->increment($newD);
+        self::assertSame('2021-03-30 00:00:00', $resD->format('Y-m-d H:i:s'));
+
+        $altD = $f->decrement($resD);
+        self::assertSame('2021-03-29 23:59:00', $altD->format('Y-m-d H:i:s'));
+
+        $altD2 = $f->decrement($altD);
+        self::assertSame('2021-03-28 23:59:00', $altD2->format('Y-m-d H:i:s'));
+
+        self::assertSame('2021-03-27 23:59:00', $f->decrement($altD2)->format('Y-m-d H:i:s'));
     }
 }
