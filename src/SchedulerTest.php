@@ -133,9 +133,9 @@ final class SchedulerTest extends TestCase
     {
         $cron = Expression::fromString('0 15 * * 3'); //Wednesday at 15:00
 
-        $cronUTC = new Scheduler($cron, 'UTC', StartDatePresence::EXCLUDED); //Wednesday at 15:00
-        $cronAms = new Scheduler($cron, 'Europe/Amsterdam', StartDatePresence::EXCLUDED); //Wednesday at 15:00
-        $cronTok = new Scheduler($cron, new DateTimeZone('Asia/Tokyo'), StartDatePresence::EXCLUDED); //Wednesday at 15:00
+        $cronUTC = new Scheduler($cron, 'UTC', InitialDatePresence::EXCLUDED); //Wednesday at 15:00
+        $cronAms = new Scheduler($cron, 'Europe/Amsterdam', InitialDatePresence::EXCLUDED); //Wednesday at 15:00
+        $cronTok = new Scheduler($cron, new DateTimeZone('Asia/Tokyo'), InitialDatePresence::EXCLUDED); //Wednesday at 15:00
         $date = '2014-01-01 15:00'; //Wednesday
         $utc = new DateTimeZone('UTC');
         $amsterdam =  new DateTimeZone('Europe/Amsterdam');
@@ -160,9 +160,9 @@ final class SchedulerTest extends TestCase
     public function testIsDueHandlesDifferentTimezonesAsArgument(): void
     {
         $cron = Expression::fromString('0 15 * * 3');
-        $cronUTC = new Scheduler($cron, 'UTC', StartDatePresence::EXCLUDED); //Wednesday at 15:00
-        $cronAms = new Scheduler($cron, new DateTimeZone('Europe/Amsterdam'), StartDatePresence::EXCLUDED); //Wednesday at 15:00
-        $cronTok = new Scheduler($cron, new DateTimeZone('Asia/Tokyo'), StartDatePresence::EXCLUDED); //Wednesday at 15:00
+        $cronUTC = new Scheduler($cron, 'UTC', InitialDatePresence::EXCLUDED); //Wednesday at 15:00
+        $cronAms = new Scheduler($cron, new DateTimeZone('Europe/Amsterdam'), InitialDatePresence::EXCLUDED); //Wednesday at 15:00
+        $cronTok = new Scheduler($cron, new DateTimeZone('Asia/Tokyo'), InitialDatePresence::EXCLUDED); //Wednesday at 15:00
         $date = '2014-01-01 15:00'; //Wednesday
         $utc = new DateTimeZone('UTC');
         $amsterdam = new DateTimeZone('Europe/Amsterdam');
@@ -184,7 +184,7 @@ final class SchedulerTest extends TestCase
     {
         $this->expectException(SyntaxError::class);
 
-        new Scheduler('* * * * *', 'Foo/Bar', StartDatePresence::EXCLUDED);
+        new Scheduler('* * * * *', 'Foo/Bar', InitialDatePresence::EXCLUDED);
     }
 
     public function testCanGetPreviousRunDates(): void
@@ -415,7 +415,7 @@ final class SchedulerTest extends TestCase
     {
         $tzCron = 'America/New_York';
         $tzServer = new DateTimeZone('Europe/London');
-        $scheduler = new Scheduler(expression: '0 7 * * *', timezone: $tzCron, startDatePresence: StartDatePresence::EXCLUDED);
+        $scheduler = new Scheduler(expression: '0 7 * * *', timezone: $tzCron, initialDatePresence: InitialDatePresence::EXCLUDED);
 
         /** @var DateTime $dtCurrent */
         $dtCurrent = DateTime::createFromFormat('!Y-m-d H:i:s', '2017-10-17 10:00:00', $tzServer);
@@ -440,7 +440,7 @@ final class SchedulerTest extends TestCase
 
     public function testChangingTheSchedulerProperties(): void
     {
-        $initial = new Scheduler('0 7 * * *', 'Africa/Nairobi', StartDatePresence::EXCLUDED);
+        $initial = new Scheduler('0 7 * * *', 'Africa/Nairobi', InitialDatePresence::EXCLUDED);
 
         self::assertSame($initial, $initial->withExpression($initial->expression()));
         self::assertSame($initial, $initial->withTimezone($initial->timezone()));
@@ -459,7 +459,7 @@ final class SchedulerTest extends TestCase
 
     public function testIsDueReturnsFalseWithBrokenInput(): void
     {
-        $scheduler = new Scheduler('0 7 * * *', 'Africa/Nairobi', StartDatePresence::EXCLUDED);
+        $scheduler = new Scheduler('0 7 * * *', 'Africa/Nairobi', InitialDatePresence::EXCLUDED);
 
         self::assertFalse($scheduler->isDue('foobar'));
     }
@@ -490,7 +490,7 @@ final class SchedulerTest extends TestCase
     {
         $inputDate = new /** @psalm-immutable */ class('2014-01-01 15:00') extends DateTimeImmutable {
         };
-        $scheduler = new Scheduler('0 15 2 * 3', 'Africa/Kampala', StartDatePresence::EXCLUDED);
+        $scheduler = new Scheduler('0 15 2 * 3', 'Africa/Kampala', InitialDatePresence::EXCLUDED);
         foreach ($scheduler->yieldRunsBackward($inputDate, 3) as $outputDate) {
             self::assertSame($inputDate::class, $outputDate::class);
             self::assertEquals($scheduler->timezone(), $outputDate->getTimezone());
@@ -716,7 +716,7 @@ final class SchedulerTest extends TestCase
     public function testDSTFixForDateIntervalUpdates(): void
     {
         $tz = new DateTimeZone('Europe/London');
-        $scheduler = new Scheduler('0 1 * * 0', $tz, StartDatePresence::INCLUDED);
+        $scheduler = new Scheduler('0 1 * * 0', $tz, InitialDatePresence::INCLUDED);
 
         self::assertSame('2021-03-21T01:00:00+00:00', $scheduler->run(new DateTimeImmutable('2021-03-28 14:55:03', $tz), -1)->format('c'));
     }

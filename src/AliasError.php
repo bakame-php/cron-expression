@@ -5,7 +5,7 @@ namespace Bakame\Cron;
 use LogicException;
 use Throwable;
 
-final class ExpressionAliasError extends LogicException implements CronError
+final class AliasError extends LogicException implements CronError
 {
     public static function dueToInvalidName(string $alias): self
     {

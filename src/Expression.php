@@ -32,22 +32,22 @@ final class Expression implements JsonSerializable
     /**
      * Registered a user defined CRON Expression Alias.
      *
-     * @throws ExpressionAliasError If the expression or the alias name are invalid
-     *                              or if the alias is already registered.
+     * @throws AliasError If the expression or the alias name are invalid
+     *                    or if the alias is already registered.
      */
     public static function registerAlias(string $alias, string $expression): void
     {
         try {
             self::fromString($expression);
         } catch (CronError $exception) {
-            throw ExpressionAliasError::dueToInvalidExpression($expression, $exception);
+            throw AliasError::dueToInvalidExpression($expression, $exception);
         }
 
         $shortcut = strtolower($alias);
 
         match (true) {
-            1 !== preg_match('/^@\w+$/', $shortcut) => throw ExpressionAliasError::dueToInvalidName($alias),
-            isset(self::$registeredAliases[$shortcut]) => throw ExpressionAliasError::dueToDuplicateEntry($alias),
+            1 !== preg_match('/^@\w+$/', $shortcut) => throw AliasError::dueToInvalidName($alias),
+            isset(self::$registeredAliases[$shortcut]) => throw AliasError::dueToDuplicateEntry($alias),
             default => self::$registeredAliases[$shortcut] = $expression,
         };
     }
@@ -55,13 +55,13 @@ final class Expression implements JsonSerializable
     /**
      * Unregistered a user defined CRON Expression Alias.
      *
-     * @throws ExpressionAliasError If the user tries to unregister a built-in alias
+     * @throws AliasError If the user tries to unregister a built-in alias
      */
     public static function unregisterAlias(string $alias): bool
     {
         $shortcut = strtolower($alias);
         if (isset(self::DEFAULT_ALIASES[$shortcut])) {
-            throw ExpressionAliasError::dueToForbiddenAliasRemoval($alias);
+            throw AliasError::dueToForbiddenAliasRemoval($alias);
         }
 
         if (!isset(self::$registeredAliases[$shortcut])) {

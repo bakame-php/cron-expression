@@ -14,7 +14,7 @@ final class Scheduler implements CronScheduler
 {
     private Expression $expression;
     private DateTimeZone $timezone;
-    private StartDatePresence $startDatePresence;
+    private InitialDatePresence $initialDatePresence;
 
     /** Internal variables to optimize runs calculation */
 
@@ -28,11 +28,11 @@ final class Scheduler implements CronScheduler
     public function __construct(
         Expression|string $expression,
         DateTimeZone|string $timezone,
-        StartDatePresence $startDatePresence
+        InitialDatePresence $initialDatePresence
     ) {
         $this->expression = $this->filterExpression($expression);
         $this->timezone = $this->filterTimezone($timezone);
-        $this->startDatePresence = $startDatePresence;
+        $this->initialDatePresence = $initialDatePresence;
 
         $this->initialize();
     }
@@ -84,17 +84,17 @@ final class Scheduler implements CronScheduler
     /**
      * @throws CronError
      */
-    public static function fromUTC(Expression|string $expression, StartDatePresence $startDatePresence = StartDatePresence::EXCLUDED): self
+    public static function fromUTC(Expression|string $expression, InitialDatePresence $initialDatePresence = InitialDatePresence::EXCLUDED): self
     {
-        return new self($expression, new DateTimeZone('UTC'), $startDatePresence);
+        return new self($expression, new DateTimeZone('UTC'), $initialDatePresence);
     }
 
     /**
      * @throws CronError
      */
-    public static function fromSystemTimezone(Expression|string $expression, StartDatePresence $startDatePresence = StartDatePresence::EXCLUDED): self
+    public static function fromSystemTimezone(Expression|string $expression, InitialDatePresence $initialDatePresence = InitialDatePresence::EXCLUDED): self
     {
-        return new self($expression, new DateTimeZone(date_default_timezone_get()), $startDatePresence);
+        return new self($expression, new DateTimeZone(date_default_timezone_get()), $initialDatePresence);
     }
 
     public function expression(): Expression
@@ -109,7 +109,7 @@ final class Scheduler implements CronScheduler
 
     public function isStartDateExcluded(): bool
     {
-        return StartDatePresence::EXCLUDED === $this->startDatePresence;
+        return InitialDatePresence::EXCLUDED === $this->initialDatePresence;
     }
 
     /**
@@ -122,7 +122,7 @@ final class Scheduler implements CronScheduler
             return $this;
         }
 
-        return new self($expression, $this->timezone, $this->startDatePresence);
+        return new self($expression, $this->timezone, $this->initialDatePresence);
     }
 
     /**
@@ -135,25 +135,25 @@ final class Scheduler implements CronScheduler
             return $this;
         }
 
-        return new self($this->expression, $timezone, $this->startDatePresence);
+        return new self($this->expression, $timezone, $this->initialDatePresence);
     }
 
     public function includeStartDate(): self
     {
-        if (StartDatePresence::INCLUDED === $this->startDatePresence) {
+        if (InitialDatePresence::INCLUDED === $this->initialDatePresence) {
             return $this;
         }
 
-        return new self($this->expression, $this->timezone, StartDatePresence::INCLUDED);
+        return new self($this->expression, $this->timezone, InitialDatePresence::INCLUDED);
     }
 
     public function excludeStartDate(): self
     {
-        if (StartDatePresence::EXCLUDED === $this->startDatePresence) {
+        if (InitialDatePresence::EXCLUDED === $this->initialDatePresence) {
             return $this;
         }
 
-        return new self($this->expression, $this->timezone, StartDatePresence::EXCLUDED);
+        return new self($this->expression, $this->timezone, InitialDatePresence::EXCLUDED);
     }
 
     public function run(DateTimeInterface|string $startDate, int $nth = 0): DateTimeImmutable
@@ -175,7 +175,7 @@ final class Scheduler implements CronScheduler
         try {
             $date = $this->toDateTimeImmutable($when);
 
-            return $this->nextRun($date, StartDatePresence::INCLUDED, Direction::FORWARD) === $date;
+            return $this->nextRun($date, InitialDatePresence::INCLUDED, Direction::FORWARD) === $date;
         } catch (Throwable) {
             return false;
         }
@@ -265,16 +265,16 @@ final class Scheduler implements CronScheduler
 
         $i = 0;
         $run = $startDate;
-        $startDatePresence = $this->startDatePresence;
+        $initialDatePresence = $this->initialDatePresence;
         $modifier = match ($direction) {
             Direction::BACKWARD => $this->expression->minute->decrement(...),
             Direction::FORWARD => $this->expression->minute->increment(...),
         };
         while ($i < $recurrences) {
-            yield $this->nextRun($run, $startDatePresence, $direction);
+            yield $this->nextRun($run, $initialDatePresence, $direction);
 
-            $run = $modifier($this->nextRun($run, $startDatePresence, $direction));
-            $startDatePresence = StartDatePresence::INCLUDED;
+            $run = $modifier($this->nextRun($run, $initialDatePresence, $direction));
+            $initialDatePresence = InitialDatePresence::INCLUDED;
             ++$i;
         }
     }
@@ -288,10 +288,10 @@ final class Scheduler implements CronScheduler
             throw SyntaxError::dueToInvalidStartDate();
         }
 
-        $startDatePresence = $this->startDatePresence;
+        $initialDatePresence = $this->initialDatePresence;
         $run = $startDate;
         while ($endDate > $run) {
-            $run = $this->nextRun($startDate, $startDatePresence, Direction::FORWARD);
+            $run = $this->nextRun($startDate, $initialDatePresence, Direction::FORWARD);
             if ($endDate < $run) {
                 break;
             }
@@ -299,7 +299,7 @@ final class Scheduler implements CronScheduler
             yield $run;
 
             $startDate = $this->expression->minute->increment($run);
-            $startDatePresence = StartDatePresence::INCLUDED;
+            $initialDatePresence = InitialDatePresence::INCLUDED;
         }
     }
 
@@ -312,10 +312,10 @@ final class Scheduler implements CronScheduler
             throw SyntaxError::dueToInvalidEndDate();
         }
 
-        $startDatePresence = $this->startDatePresence;
+        $initialDatePresence = $this->initialDatePresence;
         $run = $endDate;
         while ($startDate < $run) {
-            $run = $this->nextRun($endDate, $startDatePresence, Direction::BACKWARD);
+            $run = $this->nextRun($endDate, $initialDatePresence, Direction::BACKWARD);
             if ($startDate > $run) {
                 break;
             }
@@ -323,7 +323,7 @@ final class Scheduler implements CronScheduler
             yield $run;
 
             $endDate = $this->expression->minute->decrement($run);
-            $startDatePresence = StartDatePresence::INCLUDED;
+            $initialDatePresence = InitialDatePresence::INCLUDED;
         }
     }
 
@@ -332,7 +332,7 @@ final class Scheduler implements CronScheduler
      *
      * @throws CronError
      */
-    private function nextRun(DateTimeImmutable $date, StartDatePresence $startDatePresence, Direction $direction): DateTimeImmutable
+    private function nextRun(DateTimeImmutable $date, InitialDatePresence $initialDatePresence, Direction $direction): DateTimeImmutable
     {
         if ($this->includeDayOfWeekAndDayOfMonthExpression) {
             return $this->dayOfWeekAndDayOfMonthNextRun($date, $direction);
@@ -356,7 +356,7 @@ final class Scheduler implements CronScheduler
                 }
             }
 
-            if ($startDatePresence === StartDatePresence::INCLUDED || $nextRun !== $date) {
+            if ($initialDatePresence === InitialDatePresence::INCLUDED || $nextRun !== $date) {
                 break;
             }
         } while ($nextRun = $modifier($nextRun));

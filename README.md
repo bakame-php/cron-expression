@@ -88,7 +88,7 @@ To work as expected this class requires:
 
 - a CRON Expression ( as a string or as a `Expression` object)
 - a timezone as a PHP `DateTimeZone` instance or the timezone string name.
-- to know if the `startDate` if eligible should be present in the results via a `StartDatePresence` enum with two values `StartDatePresence::INCLUDED` and `StartDatePresence::EXCLUDED`.
+- to know if the `startDate` if eligible should be present in the results via a `InitialDatePresence` enum with two values `InitialDatePresence::INCLUDED` and `InitialDatePresence::EXCLUDED`.
 
 To ease instantiating the `Scheduler`, it comes bundle with two named constructors around timezone usage:
 
@@ -102,16 +102,16 @@ To ease instantiating the `Scheduler`, it comes bundle with two named constructo
 
 use Bakame\Cron\Expression;
 use Bakame\Cron\Scheduler;
-use Bakame\Cron\StartDatePresence;
+use Bakame\Cron\InitialDatePresence;
 
 require_once '/vendor/autoload.php';
 
 // You can define all properties on instantiation
 $expression = '0 7 * * *';
 $timezone = 'UTC';
-$scheduler1 = new Scheduler(Expression::fromString($expression), new DateTimeZone($timezone), StartDatePresence::INCLUDED);
-$scheduler2 = new Scheduler($expression, $timezone, StartDatePresence::INCLUDED);
-$scheduler3 = Scheduler::fromUTC($expression, StartDatePresence::INCLUDED);
+$scheduler1 = new Scheduler(Expression::fromString($expression), new DateTimeZone($timezone), InitialDatePresence::INCLUDED);
+$scheduler2 = new Scheduler($expression, $timezone, InitialDatePresence::INCLUDED);
+$scheduler3 = Scheduler::fromUTC($expression, InitialDatePresence::INCLUDED);
 
 //all these instantiated object are equals.
 ```
@@ -139,7 +139,7 @@ $scheduler->isDue('NOW'); // returns false
 The `Scheduler::run` method allows finding the following run date according to a specific date.
 
 ```php
-$scheduler = new Scheduler('@daily', 'Africa/Kigali', StartDatePresence::EXCLUDED);
+$scheduler = new Scheduler('@daily', 'Africa/Kigali', InitialDatePresence::EXCLUDED);
 $run = $scheduler->run(new Carbon\CarbonImmutable('now'));
 echo $run->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2021-12-29 00:00:00, Africa/Kigali
@@ -150,7 +150,7 @@ echo $run::class;
 The `Scheduler::run` method allows specifying the number of matches to skip before calculating the next run.
 
 ```php
-$scheduler = new Scheduler(Expression::fromString('@daily'), 'Africa/Kigali', StartDatePresence::EXCLUDED);
+$scheduler = new Scheduler(Expression::fromString('@daily'), 'Africa/Kigali', InitialDatePresence::EXCLUDED);
 echo $scheduler->run('now', 3)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2022-01-01 00:00:00, Africa/Kigali
 ```
@@ -158,12 +158,12 @@ echo $scheduler->run('now', 3)->format('Y-m-d H:i:s, e'), PHP_EOL;
 The `Scheduler::run` method accepts negative number if you want to get a run date in the past.
 
 ```php
-$scheduler = new Scheduler(Expression::fromString('@daily'), 'Africa/Kigali', StartDatePresence::EXCLUDED);
+$scheduler = new Scheduler(Expression::fromString('@daily'), 'Africa/Kigali', InitialDatePresence::EXCLUDED);
 echo $scheduler->run('2022-01-01 00:00:00', -2)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2021-12-31 00:00:00, Africa/Kigali
 ```
 
-Use the `StartDatePresence` enum on `Scheduler` instantiation or the appropriate configuration method
+Use the `InitialDatePresence` enum on `Scheduler` instantiation or the appropriate configuration method
 to allow `Scheduler` methods to include the start date in their result if eligible.
 
 - `Scheduler::includeStartDate` (will include the start date if eligible)
@@ -174,7 +174,7 @@ returned instead of modifying the current object.
 
 ```php
 $date = new DateTimeImmutable('2022-01-01 00:04:00', new DateTimeZone('Asia/Shanghai'));
-$scheduler = new Scheduler('4-59/2 * * * *', 'Asia/Shanghai', StartDatePresence::EXCLUDED);
+$scheduler = new Scheduler('4-59/2 * * * *', 'Asia/Shanghai', InitialDatePresence::EXCLUDED);
 echo $scheduler->run($date)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2022-01-01 00:06:00, Asia/Shanghai
 echo $scheduler->includeStartDate()->run($date)->format('Y-m-d H:i:s, e'), PHP_EOL;
