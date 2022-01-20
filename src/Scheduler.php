@@ -107,7 +107,7 @@ final class Scheduler implements CronScheduler
         return $this->timezone;
     }
 
-    public function isStartDateExcluded(): bool
+    public function isInitialDateExcluded(): bool
     {
         return DatePresence::EXCLUDED === $this->initialDatePresence;
     }
@@ -138,7 +138,7 @@ final class Scheduler implements CronScheduler
         return new self($this->expression, $timezone, $this->initialDatePresence);
     }
 
-    public function includeStartDate(): self
+    public function includeInitialDate(): self
     {
         if (DatePresence::INCLUDED === $this->initialDatePresence) {
             return $this;
@@ -147,7 +147,7 @@ final class Scheduler implements CronScheduler
         return new self($this->expression, $this->timezone, DatePresence::INCLUDED);
     }
 
-    public function excludeStartDate(): self
+    public function excludeInitialDate(): self
     {
         if (DatePresence::EXCLUDED === $this->initialDatePresence) {
             return $this;

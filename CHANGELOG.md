@@ -15,6 +15,9 @@ All Notable changes to `cron` will be documented in this file
 - **[BC Break]** `Fields` is the enum representing CRON expression field names.
 - **[BC Break]** `ExpressionAliasError` renamed `AliasError`
 - **[BC Break]** `StartDatePresence` enum renamed `DatePresence`
+- **[BC Break]** `Scheduler::isStartDateExcluded` renamed `Scheduler::isInitialDateExcluded`
+- **[BC Break]** `Scheduler::includeStartDate` renamed `Scheduler::includeInitialDate`
+- **[BC Break]** `Scheduler::excludeStartDate` renamed `Scheduler::excludeInitialDate`
 
 ### Deprecate
 

@@ -23,7 +23,7 @@ interface CronScheduler
     /**
      * Tells whether to include or not the relative time when calculating the next run If eligible.
      */
-    public function isStartDateExcluded(): bool;
+    public function isInitialDateExcluded(): bool;
 
     /**
      * Return an instance with the specified CRON expression.
@@ -47,7 +47,7 @@ interface CronScheduler
      * This method MUST retain the state of the current instance, and return
      * an instance that includes the relative time when calculating the next run If eligible.
      */
-    public function includeStartDate(): self;
+    public function includeInitialDate(): self;
 
     /**
      * Return an instance which excludes the relative time when calculating the next run.
@@ -55,7 +55,7 @@ interface CronScheduler
      * This method MUST retain the state of the current instance, and return
      * an instance that excludes the relative time when calculating the next run.
      */
-    public function excludeStartDate(): self;
+    public function excludeInitialDate(): self;
 
     /**
      * Determine if the cron is due to run based on a specific date.

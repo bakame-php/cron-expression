@@ -166,8 +166,8 @@ echo $scheduler->run('2022-01-01 00:00:00', -2)->format('Y-m-d H:i:s, e'), PHP_E
 Use the `DatePresence` enum on `Scheduler` instantiation or the appropriate configuration method
 to allow `Scheduler` methods to include the start date in their result if eligible.
 
-- `Scheduler::includeStartDate` (will include the start date if eligible)
-- `Scheduler::encludeStartDate` (will exclude the start date)
+- `Scheduler::includeInitialDate` (will include the start date if eligible)
+- `Scheduler::excludeInitialDate` (will exclude the start date)
 
 Because the `Scheduler` is an immutable object anytime a configuration settings is changed a new object is
 returned instead of modifying the current object.
@@ -177,7 +177,7 @@ $date = new DateTimeImmutable('2022-01-01 00:04:00', new DateTimeZone('Asia/Shan
 $scheduler = new Scheduler('4-59/2 * * * *', 'Asia/Shanghai', DatePresence::EXCLUDED);
 echo $scheduler->run($date)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2022-01-01 00:06:00, Asia/Shanghai
-echo $scheduler->includeStartDate()->run($date)->format('Y-m-d H:i:s, e'), PHP_EOL;
+echo $scheduler->includeInitialDate()->run($date)->format('Y-m-d H:i:s, e'), PHP_EOL;
 //display 2022-01-01 00:04:00, Asia/Shanghai
 ```
 
@@ -194,7 +194,7 @@ All listed methods hereafter returns a generator containing `DateTimeImmutable` 
 The recurrences value should always be a positive integer or `0`. Any negative value will trigger an exception.
 
 ```php
-$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
+$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeInitialDate();
 $runs = $scheduler->yieldRunsForward(new DateTime('2019-10-10 23:20:00'), 5);
 var_export(array_map(fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'), iterator_to_array($runs, false)));
 //returns
@@ -212,7 +212,7 @@ var_export(array_map(fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:
 The recurrences value should always be a positive integer or `0`. Any negative value will trigger an exception.
 
 ```php
-$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
+$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeInitialDate();
 $runs = $scheduler->yieldRunsBackward(new DateTime('2019-10-10 23:20:00'), 5);
 ```
 
@@ -221,7 +221,7 @@ $runs = $scheduler->yieldRunsBackward(new DateTime('2019-10-10 23:20:00'), 5);
 The interval value should always be a positive `DateInterval`. Any negative value will trigger an exception.
 
 ```php
-$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
+$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeInitialDate();
 $runs = $scheduler->yieldRunsAfter('2019-10-10 23:20:00', new DateInterval('P1D'));
 ```
 
@@ -230,7 +230,7 @@ $runs = $scheduler->yieldRunsAfter('2019-10-10 23:20:00', new DateInterval('P1D'
 The interval value should always be a positive `DateInterval`. Any negative value will trigger an exception.
 
 ```php
-$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
+$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeInitialDate();
 $runs = $scheduler->yieldRunsBefore('2019-10-10 23:20:00', '1 DAY');
 ```
 
@@ -239,7 +239,7 @@ $runs = $scheduler->yieldRunsBefore('2019-10-10 23:20:00', '1 DAY');
 If the start date in greater than the end date the `DateTimeImmutable` objects will be returned backwards.
 
 ```php
-$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeStartDate();
+$scheduler = Scheduler::fromSystemTimezone('30 0 1 * 1')->includeInitialDate();
 $runs = $scheduler->yieldRunsBetween('2019-10-10 23:20:00', '2019-09-09 00:30:00');
 ```
 

@@ -117,7 +117,7 @@ final class SchedulerTest extends TestCase
         $scheduler = Scheduler::fromSystemTimezone($cron);
 
         self::assertSame($isDue, $scheduler->isDue($relativeTime));
-        self::assertEquals(new DateTime($nextRun), $scheduler->includeStartDate()->run($relativeTime, 0));
+        self::assertEquals(new DateTime($nextRun), $scheduler->includeInitialDate()->run($relativeTime, 0));
     }
 
     public function testIsDueHandlesDifferentDates(): void
@@ -207,7 +207,7 @@ final class SchedulerTest extends TestCase
 
     public function testProvidesMultipleRunDates(): void
     {
-        $cron = Scheduler::fromSystemTimezone(Expression::fromString('*/2 * * * *'))->includeStartDate();
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('*/2 * * * *'))->includeInitialDate();
         $result = $cron->yieldRunsForward('2008-11-09 00:00:00', 4);
 
         self::assertEquals([
@@ -241,7 +241,7 @@ final class SchedulerTest extends TestCase
     public function testProvidesMultipleRunDatesForTheFarFuture(): void
     {
         // Fails with the default 1000 iteration limit
-        $cron = Scheduler::fromSystemTimezone(Expression::fromString('0 0 12 1 *'))->includeStartDate();
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('0 0 12 1 *'))->includeInitialDate();
 
         self::assertEquals([
             new DateTime('2016-01-12 00:00:00'),
@@ -263,17 +263,17 @@ final class SchedulerTest extends TestCase
         self::assertEquals($nextRun, new DateTime('2008-11-16 00:00:00'));
 
         // true is cast to 1
-        $nextRun = $cron->includeStartDate()->run('2008-11-09 00:00:00', 1);
+        $nextRun = $cron->includeInitialDate()->run('2008-11-09 00:00:00', 1);
         self::assertEquals($nextRun, new DateTime('2008-11-16 00:00:00'));
 
         // You can iterate over them
-        $nextRun = $cron->includeStartDate()->run($cron->includeStartDate()->run('2008-11-09 00:00:00', 1), 1);
+        $nextRun = $cron->includeInitialDate()->run($cron->includeInitialDate()->run('2008-11-09 00:00:00', 1), 1);
         self::assertEquals($nextRun, new DateTime('2008-11-23 00:00:00'));
 
         // You can skip more than one
-        $nextRun = $cron->includeStartDate()->run('2008-11-09 00:00:00', 2);
+        $nextRun = $cron->includeInitialDate()->run('2008-11-09 00:00:00', 2);
         self::assertEquals($nextRun, new DateTime('2008-11-23 00:00:00'));
-        $nextRun = $cron->includeStartDate()->run('2008-11-09 00:00:00', 3);
+        $nextRun = $cron->includeInitialDate()->run('2008-11-09 00:00:00', 3);
         self::assertEquals($nextRun, new DateTime('2008-11-30 00:00:00'));
     }
 
@@ -401,7 +401,7 @@ final class SchedulerTest extends TestCase
      */
     public function testMakeDayOfWeekAnOrSometimes(): void
     {
-        $cron = Scheduler::fromSystemTimezone(Expression::fromString('30 0 1 * 1'))->includeStartDate();
+        $cron = Scheduler::fromSystemTimezone(Expression::fromString('30 0 1 * 1'))->includeInitialDate();
         $runs = $cron->yieldRunsForward(new DateTime('2019-10-10 23:20:00'), 5);
         $runs = iterator_to_array($runs, false);
         self::assertSame('2019-10-14 00:30:00', $runs[0]->format('Y-m-d H:i:s'));
@@ -444,17 +444,17 @@ final class SchedulerTest extends TestCase
 
         self::assertSame($initial, $initial->withExpression($initial->expression()));
         self::assertSame($initial, $initial->withTimezone($initial->timezone()));
-        self::assertSame($initial, $initial->excludeStartDate());
-        self::assertTrue($initial->isStartDateExcluded());
+        self::assertSame($initial, $initial->excludeInitialDate());
+        self::assertTrue($initial->isInitialDateExcluded());
 
-        $includeStartDate = $initial->includeStartDate();
+        $includeStartDate = $initial->includeInitialDate();
 
         self::assertNotEquals($initial, $initial->withExpression(Expression::fromString('0 5 * * *')));
         self::assertNotEquals($initial, $initial->withTimezone(new DateTimeZone('Africa/Dakar')));
         self::assertNotEquals($initial, $includeStartDate);
-        self::assertFalse($includeStartDate->isStartDateExcluded());
-        self::assertSame($includeStartDate, $includeStartDate->includeStartDate());
-        self::assertEquals($initial, $includeStartDate->excludeStartDate());
+        self::assertFalse($includeStartDate->isInitialDateExcluded());
+        self::assertSame($includeStartDate, $includeStartDate->includeInitialDate());
+        self::assertEquals($initial, $includeStartDate->excludeInitialDate());
     }
 
     public function testIsDueReturnsFalseWithBrokenInput(): void
@@ -470,7 +470,7 @@ final class SchedulerTest extends TestCase
 
         self::assertEquals('0 7 * * *', $scheduler->expression()->toString());
         self::assertEquals('UTC', $scheduler->timezone()->getName());
-        self::assertTrue($scheduler->isStartDateExcluded());
+        self::assertTrue($scheduler->isInitialDateExcluded());
     }
 
     public function testNewCurrentTimezoneInstance(): void
@@ -481,7 +481,7 @@ final class SchedulerTest extends TestCase
 
         self::assertEquals('0 7 * * *', $scheduler->expression()->toString());
         self::assertEquals('Africa/Lagos', $scheduler->timezone()->getName());
-        self::assertTrue($scheduler->isStartDateExcluded());
+        self::assertTrue($scheduler->isInitialDateExcluded());
 
         date_default_timezone_set($currentTimezone);
     }
@@ -507,7 +507,7 @@ final class SchedulerTest extends TestCase
 
     public function testItCanReturnsRunAfterADateWithIncludedStartDate(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone('@hourly')->includeStartDate();
+        $scheduler = Scheduler::fromSystemTimezone('@hourly')->includeInitialDate();
         foreach ($scheduler->yieldRunsAfter('2010-01-01 00:00:00', '5 hours') as $i => $date) {
             self::assertEquals('2010-01-01 0'.$i.':00:00', $date->format('Y-m-d H:i:s'));
         }
@@ -515,7 +515,7 @@ final class SchedulerTest extends TestCase
 
     public function testItCanReturnsRunBeforeADateWithIncludedStartDate(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone('* * * * *')->includeStartDate();
+        $scheduler = Scheduler::fromSystemTimezone('* * * * *')->includeInitialDate();
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
             iterator_to_array($scheduler->yieldRunsBefore('2010-01-02 00:00:00', '5 minutes'), false)
@@ -564,7 +564,7 @@ final class SchedulerTest extends TestCase
 
     public function testItCanYieldRunsWithDatesAndIncludedStartDateBackward(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone('* * * * *')->includeStartDate();
+        $scheduler = Scheduler::fromSystemTimezone('* * * * *')->includeInitialDate();
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
             iterator_to_array($scheduler->yieldRunsBetween('2010-01-02 00:00:00', '2010-01-01 23:55:00'), false)
@@ -597,7 +597,7 @@ final class SchedulerTest extends TestCase
 
     public function testItCanYieldRunsWithDatesAndIncludedStartDateForward(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone('* * * * *')->includeStartDate();
+        $scheduler = Scheduler::fromSystemTimezone('* * * * *')->includeInitialDate();
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
             iterator_to_array($scheduler->yieldRunsBetween('2010-01-01 23:55:00', '2010-01-02 00:00:00'), false)
@@ -650,7 +650,7 @@ final class SchedulerTest extends TestCase
 
     public function testItWillReturnsOneRunOnlyForward(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone('*/5 * * * *')->includeStartDate();
+        $scheduler = Scheduler::fromSystemTimezone('*/5 * * * *')->includeInitialDate();
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
             iterator_to_array($scheduler->yieldRunsBetween('2010-01-02 00:00:00', '2010-01-02 00:04:00'), false)
@@ -660,7 +660,7 @@ final class SchedulerTest extends TestCase
 
     public function testItWillReturnsOneRunOnlyBackward(): void
     {
-        $scheduler = Scheduler::fromSystemTimezone('*/5 * * * *')->includeStartDate();
+        $scheduler = Scheduler::fromSystemTimezone('*/5 * * * *')->includeInitialDate();
         $res = array_map(
             fn (DateTimeImmutable $d): string => $d->format('Y-m-d H:i:s'),
             iterator_to_array($scheduler->yieldRunsBetween('2010-01-02 00:05:00', '2010-01-02 00:02:00'), false)
