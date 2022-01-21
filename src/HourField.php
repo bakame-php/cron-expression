@@ -7,7 +7,6 @@ namespace Bakame\Cron;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
-use DateTimeZone;
 
 /**
  * Hours field.  Allows: * , / -.
@@ -27,22 +26,13 @@ final class HourField extends ExpressionField
         $date = $this->toDateTimeImmutable($date);
 
         if ('*' === $this->field) {
-            return $date
-                ->setTimezone(new DateTimeZone('UTC'))
-                ->sub(new DateInterval('PT'.(int) $date->format('j').'M'))
-                ->add(new DateInterval('PT1H'))
-                ->setTimezone($date->getTimezone());
+            return $date->add(new DateInterval('PT'.(60 - (int) $date->format('j')).'M'));
         }
 
         $currentHour = (int) $date->format('H');
         $hour = $this->computeTimeFieldRangeValue($currentHour, $this->field, Direction::FORWARD);
         if ($hour < $currentHour) {
-            return $date
-                ->setTimezone(new DateTimeZone('UTC'))
-                ->setTime(0, 0)
-                ->add(new DateInterval('P1D'))
-                ->setTimezone($date->getTimezone())
-            ;
+            return $date->setTime(0, 0)->add(new DateInterval('P1D'));
         }
 
         return $date->setTime($hour, 0);
@@ -53,22 +43,13 @@ final class HourField extends ExpressionField
         $date = $this->toDateTimeImmutable($date);
 
         if ('*' === $this->field) {
-            return $date
-                ->setTimezone(new DateTimeZone('UTC'))
-                ->sub(new DateInterval('PT'.((int) $date->format('j') + 1).'M'))
-                ->setTimezone($date->getTimezone())
-            ;
+            return $date->sub(new DateInterval('PT'.((int) $date->format('j') + 1).'M'));
         }
 
         $currentHour = (int) $date->format('H');
         $hour = $this->computeTimeFieldRangeValue($currentHour, $this->field, Direction::BACKWARD);
         if ($hour > $currentHour) {
-            return $date
-                ->setTimezone(new DateTimeZone('UTC'))
-                ->setTime(0, 0)
-                ->sub(new DateInterval('PT1M'))
-                ->setTimezone($date->getTimezone())
-            ;
+            return $date->setTime(0, 0)->sub(new DateInterval('PT1M'));
         }
 
         $res = $date->setTime($hour, 59);
