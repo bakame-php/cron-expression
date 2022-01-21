@@ -11,22 +11,22 @@ use Generator;
 interface CronScheduler
 {
     /**
-     * Returns the CRON expression attached to the object.
+     * Returns the object CRON expression.
      */
     public function expression(): Expression;
 
     /**
-     * Returns the scheduler execution timezone.
+     * Returns the object timezone.
      */
     public function timezone(): DateTimeZone;
 
     /**
-     * Tells whether to include or not the relative time when calculating the next run If eligible.
+     * Tells whether to include or not the initial calculation date as next run If eligible.
      */
     public function isInitialDateExcluded(): bool;
 
     /**
-     * Return an instance with the specified CRON expression.
+     * Returns an instance with the specified CRON expression.
      *
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the specified CRON expression.
@@ -34,7 +34,7 @@ interface CronScheduler
     public function withExpression(Expression $expression): self;
 
     /**
-     * Return an instance with the specified Timezone.
+     * Returns an instance with the specified Timezone.
      *
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the specified Timezone.
@@ -42,7 +42,7 @@ interface CronScheduler
     public function withTimezone(DateTimeZone $timezone): self;
 
     /**
-     * Return an instance which includes the relative time when calculating the next run If eligible.
+     * Returns an instance which includes the initial time when calculating the next run If eligible.
      *
      * This method MUST retain the state of the current instance, and return
      * an instance that includes the relative time when calculating the next run If eligible.
@@ -50,7 +50,7 @@ interface CronScheduler
     public function includeInitialDate(): self;
 
     /**
-     * Return an instance which excludes the relative time when calculating the next run.
+     * Return an instance which excludes the initial time when calculating the next run.
      *
      * This method MUST retain the state of the current instance, and return
      * an instance that excludes the relative time when calculating the next run.
@@ -69,8 +69,7 @@ interface CronScheduler
     /**
      * Get a run date relative to a specific date.
      *
-     * @param DateTimeInterface|string $startDate Relative calculation date
-     *                                            If the date is expressed with a string,
+     * @param DateTimeInterface|string $startDate Relative calculation date. If the date is expressed with a string,
      *                                            the scheduler will assume the date uses the underlying system timezone
      *
      * @param int $nth Number of matches to skip before returning a matching next run date. 0, the default, will

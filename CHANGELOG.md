@@ -11,6 +11,7 @@ All Notable changes to `cron` will be documented in this file
 
 ### Fixed
 
+- `Expression::registerAlias` accepts `Expression` objects as possible input for consistency.
 - **[BC Break]** `ExpressionField` represents the generic Expression Field abstract class
 - **[BC Break]** `Fields` is the enum representing CRON expression field names.
 - **[BC Break]** `ExpressionAliasError` renamed `AliasError`

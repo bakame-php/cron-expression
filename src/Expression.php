@@ -6,6 +6,9 @@ namespace Bakame\Cron;
 
 use JsonSerializable;
 
+/**
+ * A Immutable Value Object representing a CRON expression.
+ */
 final class Expression implements JsonSerializable
 {
     /**
@@ -35,12 +38,14 @@ final class Expression implements JsonSerializable
      * @throws AliasError If the expression or the alias name are invalid
      *                    or if the alias is already registered.
      */
-    public static function registerAlias(string $alias, string $expression): void
+    public static function registerAlias(string $alias, Expression|string $expression): void
     {
-        try {
-            self::fromString($expression);
-        } catch (CronError $exception) {
-            throw AliasError::dueToInvalidExpression($expression, $exception);
+        if (!$expression instanceof Expression) {
+            try {
+                $expression = self::fromString($expression);
+            } catch (CronError $exception) {
+                throw AliasError::dueToInvalidExpression($expression, $exception);
+            }
         }
 
         $shortcut = strtolower($alias);
@@ -48,7 +53,7 @@ final class Expression implements JsonSerializable
         match (true) {
             1 !== preg_match('/^@\w+$/', $shortcut) => throw AliasError::dueToInvalidName($alias),
             isset(self::$registeredAliases[$shortcut]) => throw AliasError::dueToDuplicateEntry($alias),
-            default => self::$registeredAliases[$shortcut] = $expression,
+            default => self::$registeredAliases[$shortcut] = $expression->toString(),
         };
     }
 
@@ -83,7 +88,7 @@ final class Expression implements JsonSerializable
 
     /**
      * Returns all registered aliases as an associated array where the aliases are the key
-     * and their associated expressions are the values.
+     * and their associated expressions are the values expressed in string.
      *
      * @return array<string, string>
      */

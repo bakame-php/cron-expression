@@ -15,12 +15,9 @@ final class Scheduler implements CronScheduler
     private Expression $expression;
     private DateTimeZone $timezone;
     private DatePresence $initialDatePresence;
-
-    /** Internal variables to optimize runs calculation */
-
     /** @var array<string, CronField>  */
     private array $calculatedFields;
-    private bool $includeDayOfWeekAndDayOfMonthExpression;
+    private bool $useDayOfWeekAndDayOfMonthExpression;
 
     /**
      * @throws CronError
@@ -33,8 +30,18 @@ final class Scheduler implements CronScheduler
         $this->expression = $this->filterExpression($expression);
         $this->timezone = $this->filterTimezone($timezone);
         $this->initialDatePresence = $initialDatePresence;
-
-        $this->initialize();
+        /* Internal variables to optimize runs calculation */
+        $this->calculatedFields = array_filter([
+            Field::MONTH->value => $this->expression->month,
+            Field::DAY_OF_MONTH->value => $this->expression->dayOfMonth,
+            Field::DAY_OF_WEEK->value => $this->expression->dayOfWeek,
+            Field::HOUR->value => $this->expression->hour,
+            Field::MINUTE->value => $this->expression->minute,
+        ], fn (CronField $f): bool => !in_array($f->toString(), ['*', '?'], true));
+        $this->useDayOfWeekAndDayOfMonthExpression = isset(
+            $this->calculatedFields[Field::DAY_OF_MONTH->value],
+            $this->calculatedFields[Field::DAY_OF_WEEK->value]
+        );
     }
 
     /**
@@ -63,22 +70,6 @@ final class Scheduler implements CronScheduler
         } catch (Exception $exception) {
             throw SyntaxError::dueToInvalidDateTimeZoneString($timezone, $exception);
         }
-    }
-
-    private function initialize(): void
-    {
-        $this->calculatedFields = array_filter([
-            Field::MONTH->value => $this->expression->month,
-            Field::DAY_OF_MONTH->value => $this->expression->dayOfMonth,
-            Field::DAY_OF_WEEK->value => $this->expression->dayOfWeek,
-            Field::HOUR->value => $this->expression->hour,
-            Field::MINUTE->value => $this->expression->minute,
-        ], fn (CronField $f): bool => !in_array($f->toString(), ['*', '?'], true));
-
-        $this->includeDayOfWeekAndDayOfMonthExpression = isset(
-            $this->calculatedFields[Field::DAY_OF_MONTH->value],
-            $this->calculatedFields[Field::DAY_OF_WEEK->value]
-        );
     }
 
     /**
@@ -334,7 +325,7 @@ final class Scheduler implements CronScheduler
      */
     private function nextRun(DateTimeImmutable $date, DatePresence $initialDatePresence, Direction $direction): DateTimeImmutable
     {
-        if ($this->includeDayOfWeekAndDayOfMonthExpression) {
+        if ($this->useDayOfWeekAndDayOfMonthExpression) {
             return $this->dayOfWeekAndDayOfMonthNextRun($date, $direction);
         }
 

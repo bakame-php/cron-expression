@@ -28,8 +28,8 @@ final class HourField extends ExpressionField
 
         if ('*' === $this->field) {
             return $date
-                ->sub(new DateInterval('PT'.(int) $date->format('j').'M'))
                 ->setTimezone(new DateTimeZone('UTC'))
+                ->sub(new DateInterval('PT'.(int) $date->format('j').'M'))
                 ->add(new DateInterval('PT1H'))
                 ->setTimezone($date->getTimezone());
         }
