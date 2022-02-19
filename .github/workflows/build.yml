@@ -47,11 +47,8 @@ jobs:
             - name: Run Unit tests with coverage
               run: composer phpunit
 
-            - name: Run static analysis with PHPStan
+            - name: Run static analysis
               run: composer phpstan
-
-            - name: Run static analysis with Psalm
-              run: composer psalm
 
             - name: Run Coding style rules
               run: composer phpcs
